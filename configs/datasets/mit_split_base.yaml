@@ -1,0 +1,4 @@
+name: "mit_split"
+
+transforms:
+  resize: [224, 224]

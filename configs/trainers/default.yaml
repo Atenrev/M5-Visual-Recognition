@@ -1,0 +1,11 @@
+epochs: 2
+runs_path: "./runs/"
+report_path: "./reports/"
+
+optimizer:
+  gradient_accumulation_steps: 1
+  type: "adafactor" 
+  scale_parameter: True
+  relative_step: True
+  warmup_init: True
+  clip_threshold: True
