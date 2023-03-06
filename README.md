@@ -5,7 +5,7 @@
 
 [Overleaf document](https://www.overleaf.com/read/krjjggkdhpsb)
 
-[Presentation slides]()
+[Presentation slides](https://docs.google.com/presentation/d/1N0aDFoihjSk5I_r0FaBP8MKEkNiQIScsjYzAy7u0WtA/edit?usp=sharing)
 
 
 ## Group 1
