@@ -12,7 +12,7 @@
 
 - Alex Carrillo Alza ([email](mailto:asdf))
 
-- Adria Molina Rodriguez ([email](mailto:asdf))
+- Adria Molina Rodriguez ([email](mailto:amolina@cvc.uab.cat))
 
 - Sergi Masip Cabezas ([email](mailto:asdf))
 
