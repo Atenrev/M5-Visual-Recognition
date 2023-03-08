@@ -47,10 +47,6 @@ class SmallSqueezeNetCNN(BaseModel):
 
         self.dropout_fire5 = nn.Dropout2d(0.5)
         self.conv10 = nn.Conv2d(256, self.config.num_classes, kernel_size=1)
-        # TODO: Properly implement global average pooling
-        # self.global_avgpool10 = nn.GlobalAvgPool2d()
-        self.global_avgpool10 = nn.AdaptiveAvgPool2d(1)  # this should work?
-        self.softmax = nn.Softmax(dim=1)
 
         self.activation = getattr(F, 'relu')
 
@@ -114,13 +110,12 @@ class SmallSqueezeNetCNN(BaseModel):
 
         dropout_fire5 = self.dropout_fire5(x5)
         x_conv10 = self.conv10(dropout_fire5)
-        global_avgpool10 = self.global_avgpool10(x_conv10)
-
-        outputs = self.softmax(global_avgpool10)
+        outputs = x_conv10.mean(dim=(-2, -1))
 
         loss = None
 
         if target is not None:
+            target = F.one_hot(target, num_classes=self.config.num_classes).float()
             loss = self.loss_function(outputs, target)
 
         return {
