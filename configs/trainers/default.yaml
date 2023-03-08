@@ -1,4 +1,5 @@
-epochs: 2
+epochs: 4
+project_name: "m5_week1"
 runs_path: "./runs/"
 report_path: "./reports/"
 

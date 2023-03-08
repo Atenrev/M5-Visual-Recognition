@@ -68,7 +68,7 @@ class Runner:
             self.loss_metric.update(loss)
 
             if tracker is not None:
-                tracker.add_batch_metric("loss", loss, self.run_count)
+                tracker.add_batch_metric("loss", loss, self.run_count, commit=True)
 
             for metric in self.metrics:
                 if metric.inpyt_type == "str":
@@ -82,7 +82,7 @@ class Runner:
                     val = metric.calculate_and_update(targets, predictions)
 
                 if tracker is not None:
-                    tracker.add_batch_metric(metric.name, val, self.run_count)
+                    tracker.add_batch_metric(metric.name, val, self.run_count, commit=False)
 
             if self.optimizer is not None:
                 b_loss = outputs["loss"].mean() / self.grad_accumulation_steps

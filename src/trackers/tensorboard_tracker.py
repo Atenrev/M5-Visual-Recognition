@@ -14,7 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from src.trackers.tracker import Stage
 from src.common.registry import Registry
-from src.common.utils import create_experiment_dir, generate_experiment_name
+from src.common.utils import create_experiment_dir
 
 
 class TensorboardExperiment:
@@ -44,6 +44,9 @@ class TensorboardExperiment:
     def flush(self):
         self._writer.flush()
 
+    def finish(self):
+        self._writer.close()
+
     @staticmethod
     def _validate_log_dir(log_dir: str, create: bool = True):
         log_path = Path(log_dir).resolve()
@@ -65,7 +68,7 @@ class TensorboardExperiment:
             'optimizer_state_dict': optimizer.state_dict(),
         }, save_path)
 
-    def add_batch_metric(self, name: str, value: float, step: int):
+    def add_batch_metric(self, name: str, value: float, step: int, commit: bool = True):
         tag = f"{self.stage.name}/batch/{name}"
         self._writer.add_scalar(tag, value, step)
 

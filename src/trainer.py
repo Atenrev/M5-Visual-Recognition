@@ -10,6 +10,7 @@ from src.common.utils import generate_experiment_name
 from src.models.base_model import BaseModel
 from src.runner import Runner
 from src.trackers.tensorboard_tracker import TensorboardExperiment
+from src.trackers.wandb_tracker import WandbTracker
 from src.trackers.tracker import Stage
 
 
@@ -183,8 +184,9 @@ class Trainer:
         self.val_runner = Runner(self.model, self.val_dataloader, self.device)
 
         experiment_name = generate_experiment_name()
-        self.tracker = TensorboardExperiment(log_path=self.config.runs_path,
-                                             experiment_name=experiment_name)
+        self.tracker = WandbTracker(log_path=self.config.runs_path,
+                                    experiment_name=experiment_name,
+                                    project_name=self.config.project_name)
 
         best_val_value = float("inf")
 
@@ -220,3 +222,5 @@ class Trainer:
             self.train_runner.reset()
             self.val_runner.reset()
             self.tracker.flush()
+
+        self.tracker.finish()

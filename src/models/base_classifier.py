@@ -23,15 +23,22 @@ class BaseClassifier(BaseModel):
         self.model = model_ft
 
     def forward(self, image: torch.Tensor, target: torch.Tensor, **kwargs) -> dict:
-        outputs, aux_outputs = self.model(image)
+        outputs = self.model(image)
+        
+        if isinstance(outputs, tuple):
+            outputs, aux_outputs = outputs
+        else:
+            aux_outputs = None
 
         loss = None
 
         if target is not None:
-            loss1 = self.loss_function(outputs, target)
-            loss2 = self.loss_function(aux_outputs, target)
-            loss = loss1 + 0.4*loss2
-            # loss = self.loss_function(outputs, target)
+            if aux_outputs is not None:
+                loss1 = self.loss_function(outputs, target)
+                loss2 = self.loss_function(aux_outputs, target)
+                loss = loss1 + 0.4*loss2
+            else:
+                loss = self.loss_function(outputs, target)
 
         return {
             'loss': loss,

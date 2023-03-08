@@ -91,6 +91,7 @@ def main(args: argparse.Namespace) -> None:
 
     # Trainer specific configuration loading
     trainer_config = get_trainer_configuration(args.trainer_config)
+    trainer_config.batch_size = args.batch_size
     Registry.register("trainer_config", trainer_config)
 
     # DataLoaders

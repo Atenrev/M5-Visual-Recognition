@@ -110,6 +110,7 @@ data/
 /models/
 /runs/
 /plots/
+/wandb/
 environment.yml
 experiments.json
 eval_report.txt

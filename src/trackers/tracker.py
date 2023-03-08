@@ -20,7 +20,7 @@ class ExperimentTracker(Protocol):
     def set_stage(self, stage: Stage):
         """Sets the current stage of the experiment."""
 
-    def add_batch_metric(self, name: str, value: float, step: int):
+    def add_batch_metric(self, name: str, value: float, step: int, commit: bool = True):
         """Implements logging a batch-level metric."""
 
     def add_epoch_metric(self, name: str, value: float, step: int):
@@ -30,3 +30,9 @@ class ExperimentTracker(Protocol):
         self, y_true: List[np.ndarray], y_pred: List[np.ndarray], step: int
     ):
         """Implements logging a confusion matrix at epoch-level."""
+
+    def flush(self):
+        """Implements flushing the experiment tracker."""
+
+    def finish(self):
+        """Implements finishing the experiment tracker."""
