@@ -1,0 +1,6 @@
+classname: "Xception"
+
+num_classes: 8
+
+metrics:
+- accuracy
