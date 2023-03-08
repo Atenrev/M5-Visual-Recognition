@@ -23,8 +23,15 @@ class WandbTracker(ExperimentTracker):
             "model": Registry.get("model_config"),
             "dataset": Registry.get("dataset_config")
         }
+
+        if "entity" in configs["trainer"]:
+            entity = configs["trainer"]["entity"]
+        else:
+            entity = None
+
         self.run = wandb.init(project=project_name,
                               name=experiment_name, 
+                              entity=entity,  
                               config=configs,
                               tags=tags)
         log_dir, self.models_dir = create_experiment_dir(

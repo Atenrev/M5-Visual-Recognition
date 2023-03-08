@@ -1,5 +1,6 @@
 epochs: 4
 project_name: "m5_week1"
+entity: "m5-group1"
 runs_path: "./runs/"
 report_path: "./reports/"
 
