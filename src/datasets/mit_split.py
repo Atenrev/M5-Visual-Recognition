@@ -64,7 +64,10 @@ def create_dataloader(
     test_dirs = glob.glob(os.path.join(dataset_path, "test/*"))
     test_dirs.sort()
 
-    if config.transforms and config.transforms.resize:
+    if "transforms" in config:
+        for transform in config.transforms:
+            # TODO
+            pass
         transforms = T.Compose([
                     T.Resize(299),
                     T.CenterCrop(299),
@@ -76,25 +79,13 @@ def create_dataloader(
     test_dataset = MITSplitDataset(test_dirs, device, config, **dataset_kwargs)
 
     if not inference:
-        # Split the dataset into train, validation, and test
-        train_size = int(0.8 * len(train_dataset))
-        val_size = len(train_dataset) - train_size
-        train_dataset, val_dataset = torch.utils.data.random_split(
-            train_dataset, [train_size, val_size])
-
         train_dataloader = DataLoader(
             dataset=train_dataset,
             batch_size=batch_size,
             shuffle=True,
             num_workers=0,
         )
-        val_dataloader = DataLoader(
-            dataset=val_dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=0,
-        )
-        test_dataloader = DataLoader(
+        val_dataloader = test_dataloader = DataLoader(
             dataset=test_dataset,
             batch_size=batch_size,
             shuffle=False,
