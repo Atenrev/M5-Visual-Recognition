@@ -7,6 +7,7 @@ import kornia.augmentation as K
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torchvision.transforms.functional import pil_to_tensor
 
 from src.common.sample import Sample
 from src.datasets.base_dataset import BaseDataset
@@ -43,7 +44,8 @@ class MITSplitDataset(BaseDataset):
         image = Image.open(image_path).convert("RGB")
 
         if self.transform:
-            image = self.transform(image)
+            image = pil_to_tensor(image).float()
+            image = self.transform(image).squeeze()
 
         return Sample(sample_id, {
             "image": image,
@@ -81,7 +83,10 @@ def create_dataloader(
             K.RandomHorizontalFlip(p=config.transforms.hflip),
             K.RandomVerticalFlip(p=config.transforms.vflip),
         ]
-        dataset_kwargs["transform"] = nn.Sequential(*transforms)
+        dataset_kwargs["transform"] = K.AugmentationSequential(
+            *transforms,
+            data_keys=["input"]
+        )# nn.Sequential(*transforms)
 
     train_dataset = MITSplitDataset(train_dirs, device, config, **dataset_kwargs)
     test_dataset = MITSplitDataset(test_dirs, device, config, **dataset_kwargs)
