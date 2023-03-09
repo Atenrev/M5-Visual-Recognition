@@ -1,5 +1,5 @@
 name: "mit_split"
 
 transforms:
-  resize: [224, 224]
+  resize: [64, 64]
   rotation: [0, 15]
