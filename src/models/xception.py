@@ -13,10 +13,11 @@ class Xception(BaseModel):
         self.model = timm.create_model('xception', pretrained=True, num_classes=config.num_classes)
         self.loss_function = torch.nn.CrossEntropyLoss()
 
-    def forward(self, image: torch.Tensor, target: torch.Tensor, **kwargs) -> dict:
+    def forward(self, image: torch.Tensor, **kwargs) -> dict:
         outputs = self.model(image)
 
         loss = None
+        target = kwargs.get('target', None)
 
         if target is not None:
             loss = self.loss_function(outputs, target)

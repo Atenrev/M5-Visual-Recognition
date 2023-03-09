@@ -54,7 +54,7 @@ class SmallSqueezeNetCNN(BaseModel):
             if isinstance(module, nn.Conv2d):
                 nn.init.xavier_uniform_(module.weight)
 
-    def forward(self, image: torch.Tensor, target: torch.Tensor, **kwargs) -> dict:
+    def forward(self, image: torch.Tensor, **kwargs) -> dict:
         x = self.conv1(image)
         x = self.activation(x)
         x = self.maxpool1(x)
@@ -113,6 +113,7 @@ class SmallSqueezeNetCNN(BaseModel):
         outputs = x_conv10.mean(dim=(-2, -1))
 
         loss = None
+        target = kwargs.get('target', None)
 
         if target is not None:
             target = F.one_hot(target, num_classes=self.config.num_classes).float()

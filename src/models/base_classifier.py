@@ -22,7 +22,7 @@ class BaseClassifier(BaseModel):
         model_ft.fc = nn.Linear(num_ftrs, num_classes)
         self.model = model_ft
 
-    def forward(self, image: torch.Tensor, target: torch.Tensor, **kwargs) -> dict:
+    def forward(self, image: torch.Tensor, **kwargs) -> dict:
         outputs = self.model(image)
         
         if isinstance(outputs, tuple):
@@ -31,6 +31,7 @@ class BaseClassifier(BaseModel):
             aux_outputs = None
 
         loss = None
+        target = kwargs.get('target', None)
 
         if target is not None:
             if aux_outputs is not None:

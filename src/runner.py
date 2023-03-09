@@ -57,7 +57,7 @@ class Runner:
         self.model.train(self.stage is Stage.TRAIN)
 
         for step_i, local_batch in enumerate(tqdm(self.data_loader)):
-            batch = local_batch["data"]
+            batch = local_batch["data"] if "data" in local_batch else local_batch
             outputs = self.model(**batch)
             logits = outputs["logits"].detach().cpu().numpy()
             predictions = logits.argmax(axis=1)
