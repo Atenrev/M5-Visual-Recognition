@@ -36,7 +36,3 @@ class BaseDataset(Dataset[Any]):
         """
         sample = self.getitem(idx)
         return sample.to(self.device)
-        
-
-
-
