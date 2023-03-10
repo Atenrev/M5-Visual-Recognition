@@ -72,16 +72,17 @@ def create_dataloader(
         transforms += [
             K.RandomBrightness(
                 brightness=(config.transforms.brightness_min, config.transforms.brightness_max),
-                p=0.5,
+                p=0.05,
             ),
             K.RandomAffine(
                 degrees=config.transforms.rotation,
                 translate=config.transforms.translate,
                 scale=config.transforms.scale,
                 shear=config.transforms.shear,
+                p=0.05,
             ),
-            K.RandomHorizontalFlip(p=config.transforms.hflip),
-            K.RandomVerticalFlip(p=config.transforms.vflip),
+            K.RandomHorizontalFlip(p=0.05),
+            K.RandomVerticalFlip(p=0.05),
         ]
         dataset_kwargs["transform"] = K.AugmentationSequential(
             *transforms,
