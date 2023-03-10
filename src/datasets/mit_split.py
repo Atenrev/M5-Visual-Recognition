@@ -67,7 +67,7 @@ def create_dataloader(
     test_dirs = glob.glob(os.path.join(dataset_path, "test/*"))
     test_dirs.sort()
 
-    transforms = [K.Resize(64),]
+    transforms = [K.Resize(config.input_resize), K.Normalize(mean=torch.zeros(3), std=torch.ones(3))]
     if "transforms" in config:
         transforms += [
             K.RandomBrightness(

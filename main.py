@@ -23,8 +23,8 @@ def parse_args() -> argparse.Namespace:
                         help='Trainer params to use')
     parser.add_argument('--dataset_dir', type=str, default="datasets/folds/MIT_small_train_1/",
                         help='Dataset directory path')
-    parser.add_argument('--mode', type=str, default="summary",
-                        help='Execution mode ("training" or "eval")')
+    parser.add_argument('--mode', type=str, default="train",
+                        help='Execution mode ("train", "eval" or "summary")')
     parser.add_argument('--load_checkpoint', type=str, default=None,
                         help='Path to model checkpoint')
     parser.add_argument('--batch_size', type=int, default=4,
