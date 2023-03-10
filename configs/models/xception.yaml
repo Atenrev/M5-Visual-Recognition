@@ -2,5 +2,7 @@ classname: "Xception"
 
 num_classes: 8
 
+p_freeze: 0.5
+
 metrics:
 - accuracy
