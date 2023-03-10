@@ -126,16 +126,17 @@ class Trainer:
             self.tracker.add_epoch_metric(
                 metric.name, metric.average, epoch_id)
 
-        print("\nVALIDATION EPOCH:\n")
-        self.tracker.set_stage(Stage.VAL)
-        with torch.no_grad():
-            self.val_runner.run_epoch(self.tracker)
-        self.tracker.add_epoch_metric(
-            "loss", self.val_runner.average_loss, epoch_id)
-
-        for metric in self.val_runner.metrics:
+        if epoch_id % self.config.validate_every == 0:
+            print("\nVALIDATION EPOCH:\n")
+            self.tracker.set_stage(Stage.VAL)
+            with torch.no_grad():
+                self.val_runner.run_epoch(self.tracker)
             self.tracker.add_epoch_metric(
-                metric.name, metric.average, epoch_id)
+                "loss", self.val_runner.average_loss, epoch_id)
+
+            for metric in self.val_runner.metrics:
+                self.tracker.add_epoch_metric(
+                    metric.name, metric.average, epoch_id)
 
     def eval(self) -> None:
         """

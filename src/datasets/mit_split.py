@@ -1,11 +1,13 @@
-import torch
-import glob
 import os
-import torchvision.transforms as T
-
+import glob
 from PIL import Image
 from typing import Any, Tuple, List, Optional
+
+import kornia.augmentation as K
+import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader
+from torchvision.transforms.functional import pil_to_tensor
 
 from src.common.sample import Sample
 from src.datasets.base_dataset import BaseDataset
@@ -40,9 +42,10 @@ class MITSplitDataset(BaseDataset):
         sample_id = os.path.basename(image_path)
 
         image = Image.open(image_path).convert("RGB")
+        image = pil_to_tensor(image).float()
 
         if self.transform:
-            image = self.transform(image)
+            image = self.transform(image).squeeze()
 
         return Sample(sample_id, {
             "image": image,
@@ -64,17 +67,27 @@ def create_dataloader(
     test_dirs = glob.glob(os.path.join(dataset_path, "test/*"))
     test_dirs.sort()
 
+    transforms = [K.Resize(64),]
     if "transforms" in config:
-        for transform in config.transforms:
-            # TODO
-            pass
-        transforms = T.Compose([
-                    T.Resize(299),
-                    T.CenterCrop(299),
-                    T.ToTensor(),
-                    T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-        dataset_kwargs["transform"] = transforms
-    
+        transforms += [
+            K.RandomBrightness(
+                brightness=(config.transforms.brightness_min, config.transforms.brightness_max),
+                p=0.5,
+            ),
+            K.RandomAffine(
+                degrees=config.transforms.rotation,
+                translate=config.transforms.translate,
+                scale=config.transforms.scale,
+                shear=config.transforms.shear,
+            ),
+            K.RandomHorizontalFlip(p=config.transforms.hflip),
+            K.RandomVerticalFlip(p=config.transforms.vflip),
+        ]
+        dataset_kwargs["transform"] = K.AugmentationSequential(
+            *transforms,
+            data_keys=["input"]
+        )# nn.Sequential(*transforms)
+
     train_dataset = MITSplitDataset(train_dirs, device, config, **dataset_kwargs)
     test_dataset = MITSplitDataset(test_dirs, device, config, **dataset_kwargs)
 

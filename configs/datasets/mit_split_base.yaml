@@ -1,5 +1,11 @@
 name: "mit_split"
 
-transforms:
-  resize: [64, 64]
-  rotation: [0, 15]
+# transforms:
+# rotation: 10
+# translate: [0.1, 0.1]
+# scale: [0.95, 1.]
+# shear: 0.1
+# hflip: 0.1
+# vflip: 0.1
+# brightness_min: 0.3
+# brightness_max: 0.9
