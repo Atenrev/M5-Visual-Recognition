@@ -42,9 +42,9 @@ class MITSplitDataset(BaseDataset):
         sample_id = os.path.basename(image_path)
 
         image = Image.open(image_path).convert("RGB")
+        image = pil_to_tensor(image).float()
 
         if self.transform:
-            image = pil_to_tensor(image).float()
             image = self.transform(image).squeeze()
 
         return Sample(sample_id, {
