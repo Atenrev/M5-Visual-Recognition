@@ -84,10 +84,10 @@ def create_dataloader(
             K.RandomHorizontalFlip(p=0.05),
             K.RandomVerticalFlip(p=0.05),
         ]
-        dataset_kwargs["transform"] = K.AugmentationSequential(
-            *transforms,
-            data_keys=["input"]
-        )# nn.Sequential(*transforms)
+    dataset_kwargs["transform"] = K.AugmentationSequential(
+        *transforms,
+        data_keys=["input"]
+    )# nn.Sequential(*transforms)
 
     train_dataset = MITSplitDataset(train_dirs, device, config, **dataset_kwargs)
     test_dataset = MITSplitDataset(test_dirs, device, config, **dataset_kwargs)

@@ -47,13 +47,18 @@ class Xception(BaseModel):
         module_list = [module for module in self.model.modules()]
         flatted_list = flatten_model(module_list)
 
-        assert 0 < config.p_freeze <= 1
+        assert 0 <= config.p_freeze <= 1
         n_to_freeze = int(len(flatted_list) * config.p_freeze)
         for count, value in enumerate(flatted_list[:n_to_freeze]):
             print(count, value)
             target_layers.append(value)
             value.requires_grad = False
         #####
+        print('-'*25)
+        for count, value in enumerate(flatted_list[n_to_freeze:]):
+            print(count, value)
+            target_layers.append(value)
+            value.requires_grad = True
 
     def forward(self, image: torch.Tensor, **kwargs) -> dict:
         outputs = self.model(image)
