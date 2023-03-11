@@ -67,7 +67,7 @@ def create_dataloader(
     test_dirs = glob.glob(os.path.join(dataset_path, "test/*"))
     test_dirs.sort()
 
-    transforms = [K.Resize(config.input_resize), K.Normalize(mean=torch.zeros(3), std=torch.ones(3))]
+    transforms = [K.Resize(config.input_resize), K.Normalize(mean=[0.4850, 0.4560, 0.4060], std=[0.2290, 0.2240, 0.2250])]
     if "transforms" in config:
         transforms += [
             K.RandomBrightness(
@@ -87,7 +87,7 @@ def create_dataloader(
     dataset_kwargs["transform"] = K.AugmentationSequential(
         *transforms,
         data_keys=["input"]
-    )# nn.Sequential(*transforms)
+    )
 
     train_dataset = MITSplitDataset(train_dirs, device, config, **dataset_kwargs)
     test_dataset = MITSplitDataset(test_dirs, device, config, **dataset_kwargs)
