@@ -42,7 +42,7 @@ class MITSplitDataset(BaseDataset):
         sample_id = os.path.basename(image_path)
 
         image = Image.open(image_path).convert("RGB")
-        image = pil_to_tensor(image).float()
+        image = pil_to_tensor(image).float() / 255
 
         if self.transform:
             image = self.transform(image).squeeze()
@@ -67,7 +67,8 @@ def create_dataloader(
     test_dirs = glob.glob(os.path.join(dataset_path, "test/*"))
     test_dirs.sort()
 
-    transforms = [K.Resize(config.input_resize), K.Normalize(mean=[0.4850, 0.4560, 0.4060], std=[0.2290, 0.2240, 0.2250])]
+    transforms = [K.Resize(config.input_resize), K.Normalize(mean=[0.4850, 0.4560, 0.4060], std=[0.2290, 0.2240,
+                                                                                                 0.2250]), ]
     if "transforms" in config:
         transforms += [
             K.RandomBrightness(
