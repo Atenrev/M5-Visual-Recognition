@@ -1,5 +1,5 @@
 epochs: 100
-validate_every: 3
+validate_every: 1
 project_name: "m5_week1_squeezenet"
 entity: "m5-group1"
 runs_path: "./runs/"
