@@ -6,7 +6,7 @@ runs_path: "./runs/"
 report_path: "./reports/"
 
 optimizer:
-  lr: 0.0005
+  lr: 0.0001
   beta: 0.99
   gradient_accumulation_steps: 1
   type: "adam"

@@ -14,13 +14,13 @@ class Xception(BaseModel):
         self.loss_function = torch.nn.CrossEntropyLoss()
 
         ##### Freeze/Unfreeze Layers
-        param_list = self.model.parameters()
+        param_list = list(self.model.parameters())
         assert 0 <= config.p_freeze <= 1
         n_to_freeze = int(len(param_list) * config.p_freeze)
-        for param in self.model.parameters()[:n_to_freeze]:
+        for param in param_list[:n_to_freeze]:
             param.requires_grad = False
 
-        for param in self.model.parameters()[n_to_freeze:]:
+        for param in param_list[n_to_freeze:]:
             param.requires_grad = True
         #####
 
