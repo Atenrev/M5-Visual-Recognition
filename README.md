@@ -14,6 +14,6 @@
 
 - Adria Molina Rodriguez ([email](mailto:amolina@cvc.uab.cat))
 
-- Sergi Masip Cabezas ([email](mailto:asdf))
+- Sergi Masip Cabezas ([email](mailto:sergi.masip@autonoma.cat))
 
 - Alvaro Francesc Budria Fernandez ([email](mailto:alvaro.francesc.budria@estudiantat.upc.edu))
