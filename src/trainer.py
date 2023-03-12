@@ -165,6 +165,8 @@ class Trainer:
 
         experiment_name = generate_experiment_name()
 
+        os.makedirs(self.config.report_path, exist_ok=True)
+
         with open(os.path.join(
                 self.config.report_path, f"{experiment_name}_report.json"),
                 "w", encoding="utf-8") as f:

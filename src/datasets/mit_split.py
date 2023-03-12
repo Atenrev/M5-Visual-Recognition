@@ -69,8 +69,10 @@ def create_dataloader(
 
     transforms = [K.Resize(config.input_resize), K.Normalize(mean=[0.4850, 0.4560, 0.4060], std=[0.2290, 0.2240,
                                                                                                  0.2250]), ]
+    train_transforms = list(transforms)
+
     if "transforms" in config:
-        transforms += [
+        train_transforms += [
             K.RandomBrightness(
                 brightness=(config.transforms.brightness_min, config.transforms.brightness_max),
                 p=0.05,
@@ -85,13 +87,20 @@ def create_dataloader(
             K.RandomHorizontalFlip(p=0.05),
             K.RandomVerticalFlip(p=0.05),
         ]
-    dataset_kwargs["transform"] = K.AugmentationSequential(
+
+    train_dataset_kwargs = dataset_kwargs.copy()
+    train_dataset_kwargs["transform"] = K.AugmentationSequential(
+        *train_transforms,
+        data_keys=["input"]
+    )
+    val_dataset_kwargs = dataset_kwargs.copy()
+    val_dataset_kwargs["transform"] = K.AugmentationSequential(
         *transforms,
         data_keys=["input"]
     )
 
-    train_dataset = MITSplitDataset(train_dirs, device, config, **dataset_kwargs)
-    test_dataset = MITSplitDataset(test_dirs, device, config, **dataset_kwargs)
+    train_dataset = MITSplitDataset(train_dirs, device, config, **train_dataset_kwargs)
+    test_dataset = MITSplitDataset(test_dirs, device, config, **val_dataset_kwargs)
 
     if not inference:
         train_dataloader = DataLoader(
