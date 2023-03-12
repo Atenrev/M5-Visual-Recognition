@@ -10,7 +10,7 @@
 
 ## Group 1
 
-- Alex Carrillo Alza ([email](mailto:asdf))
+- Alex Carrillo Alza ([email](mailto:21alexth@gmail.com))
 
 - Adria Molina Rodriguez ([email](mailto:amolina@cvc.uab.cat))
 
