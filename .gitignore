@@ -117,3 +117,4 @@ eval_report.txt
 
 *.png
 !assets/*.png
+local/*
