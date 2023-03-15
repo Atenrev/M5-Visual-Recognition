@@ -63,7 +63,7 @@ def binary_mask_to_rle(binary_mask):
                 counts.append(0)
         counts.append(len(list(elements)))
 
-    return 
+    return rle
 
 
 def binary_mask_to_polygon(binary_mask, tolerance=0):
