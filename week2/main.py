@@ -3,6 +3,8 @@ import argparse
 import cv2
 import random
 import json
+import numpy as np
+import torch
 
 from tqdm import tqdm
 from detectron2 import model_zoo
@@ -44,7 +46,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--resume_or_load", action="store_true", default=False)
     parser.add_argument("--batch_size", "-bs", type=int, default=32,
                         help="Batch size")
-    parser.add_argument("--epochs", "-ep", type=int, default=20,
+    parser.add_argument("--epochs", "-ep", type=int, default=10,
                         help="Training epochs")
     parser.add_argument("--learning_rate", "-lr", type=float, default=0.0002,
                         help="Training epochs")
@@ -73,7 +75,8 @@ def load_kitti_and_map_to_coco(dataset_name: str, dataset_dir: str, labels_path:
         for ann in annotations["annotations"]:
             if ann["image_id"] == image["id"]:
                 ann["category_id"] = class_dict[ann["category_id"]]
-                ann["bbox_mode"] = BoxMode.XYWH_ABS,
+                ann["bbox_mode"] = BoxMode.XYWH_ABS, # This is being converted to a tuple for some reason
+                ann["bbox_mode"] = ann["bbox_mode"][0] # So we need to get the first element, fuck this
                 image["annotations"].append(ann)
 
         detectron_anns.append(image)
@@ -110,6 +113,14 @@ def get_base_cfg(args):
         raise ValueError("Unknown model")
     
     cfg.DATASETS.TRAIN = ("kitti_train",)
+    if args.mode == "train":
+        cfg.DATASETS.TEST = ("kitti_val",)
+    elif args.mode == "eval":
+        cfg.DATASETS.TEST = ("kitti_test",)
+    elif args.mode == "draw_seg":
+        cfg.DATASETS.TEST = ("kitti_test",)
+    else:
+        cfg.DATASETS.TEST = ()
     cfg.DATALOADER.NUM_WORKERS = 1
 
     if args.checkpoint is None:
@@ -152,14 +163,12 @@ def get_base_cfg(args):
 
 def train(cfg, resume_or_load: bool):
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
-    cfg.DATASETS.TEST = ("kitti_val", )
     trainer = MyTrainer(cfg)
     trainer.resume_or_load(resume=resume_or_load)
     trainer.train()
     
 
 def evaluate(cfg):
-    cfg.DATASETS.TEST = ("kitti_test", )
     trainer = MyTrainer(cfg)
     trainer.resume_or_load(resume=True)
     metrics = MyTrainer.test(cfg, trainer.model)
@@ -170,7 +179,7 @@ def draw_seg(cfg, test_dataset: str, randomize: bool = True, num_images: int = 1
     from detectron2.utils.visualizer import ColorMode
     predictor = DefaultPredictor(cfg)
 
-    out_dir = os.path.join(cfg.OUTPUT_DIR, cfg.DATASETS.TEST[0] + "_out")
+    out_dir = os.path.join(cfg.OUTPUT_DIR, cfg.DATASETS.TEST[0] + "preds_out")
     os.makedirs(out_dir, exist_ok=True)
     
     cpa_metadata = MetadataCatalog.get(test_dataset)
@@ -200,7 +209,6 @@ def draw_seg(cfg, test_dataset: str, randomize: bool = True, num_images: int = 1
         instances = instances[indices_to_keep]
 
         vis = v.draw_instance_predictions(instances)
-        print(d)
         cv2.imwrite(f"{out_dir}/{d['image_id']}.jpg", vis.get_image()[:, :, ::-1])
 
 
@@ -225,7 +233,7 @@ def draw_dataset(cfg, dataset_name: str, randomize: bool = True, num_images: int
     print(f"Number of cars: {n_cars}")
     print(f"Number of pedestrians: {n_pedestrians}")
 
-    out_dir = os.path.join(cfg.OUTPUT_DIR, cfg.DATASETS.TEST[0] + "_out")
+    out_dir = os.path.join(cfg.OUTPUT_DIR, cfg.DATASETS.TEST[0] + "_gt_out")
     os.makedirs(out_dir, exist_ok=True)
    
     if randomize:
@@ -235,10 +243,13 @@ def draw_dataset(cfg, dataset_name: str, randomize: bool = True, num_images: int
         img = cv2.imread(d["file_name"])
         visualizer = Visualizer(img[:, :, ::-1], metadata=MetadataCatalog.get(dataset_name), scale=0.5)
         vis = visualizer.draw_dataset_dict(d)
-        cv2.imwrite(f"{out_dir}/{d['image_id']}.jpg", vis.get_image()[:, :, ::-1])
+        cv2.imwrite(f"{out_dir}/gt_{d['image_id']}.jpg", vis.get_image()[:, :, ::-1])
 
 
 def main(args: argparse.Namespace):
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+
     if args.map_kitti_to_coco:
         load_kitti_and_map_to_coco("kitti_train", args.dataset_dir, 
                                    os.path.join(args.labels_dir, "labels_train_split.json"))
