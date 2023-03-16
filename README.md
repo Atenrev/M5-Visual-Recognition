@@ -21,7 +21,7 @@
 
 ## Lab 2
 
-[Overleaf document](https://www.overleaf.com/read/krjjggkdhpsb)
+[Overleaf document](https://www.overleaf.com/read/wczvtbgkzmtz)
 
 [Presentation slides](https://docs.google.com/presentation/d/1C0G-nqxH_7CE-lY5INbEw5qNCo7IHPPgs7JmohEAivA/edit?usp=sharing)
 
