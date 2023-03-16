@@ -23,6 +23,6 @@
 
 [Overleaf document](https://www.overleaf.com/read/krjjggkdhpsb)
 
-[Presentation slides](https://docs.google.com/presentation/d/1N0aDFoihjSk5I_r0FaBP8MKEkNiQIScsjYzAy7u0WtA/edit?usp=sharing)
+[Presentation slides](https://docs.google.com/presentation/d/1C0G-nqxH_7CE-lY5INbEw5qNCo7IHPPgs7JmohEAivA/edit?usp=sharing)
 
 [Code](week2/readme.md)
