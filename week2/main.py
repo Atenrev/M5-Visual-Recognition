@@ -165,7 +165,7 @@ def main(args: argparse.Namespace):
     elif args.mode == "draw_seg":
         draw_seg(cfg, "kitti_test_real", args.model, mapped=args.map_kitti_to_coco)
     elif args.mode == "draw_dataset":
-        draw_dataset(cfg, "kitti_train")
+        draw_dataset(cfg, "kitti_test_real")
     elif args.mode == "draw_sequence":
         draw_sequence(cfg, "kitti_test_real", args.model, args.sequence, mapped=args.map_kitti_to_coco)
     else:

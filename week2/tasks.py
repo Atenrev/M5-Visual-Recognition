@@ -79,7 +79,8 @@ def draw_dataset(cfg, dataset_name: str, randomize: bool = True, num_images: int
                 n_pedestrians += 1
             else:
                 continue
-
+    
+    print(f"Number of images: {len(dataset_dicts)}")
     print(f"Number of cars: {n_cars}")
     print(f"Number of pedestrians: {n_pedestrians}")
 
