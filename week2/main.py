@@ -112,6 +112,9 @@ def get_base_cfg(args):
     if args.head_num_classes is not None:
         cfg.MODEL.ROI_HEADS.NUM_CLASSES = args.head_num_classes
 
+    cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+    cfg.OUTPUT_DIR = args.output_dir
+
     return cfg
 
 

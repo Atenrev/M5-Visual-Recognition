@@ -7,12 +7,15 @@ from detectron2.engine import DefaultPredictor
 from detectron2.utils.visualizer import Visualizer
 from detectron2.utils.visualizer import ColorMode
 from detectron2.data import DatasetCatalog, MetadataCatalog
+from detectron2.utils.logger import setup_logger
+
 
 from trainers import MyTrainer
 
 
 def train(cfg, resume_or_load: bool):
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+    setup_logger()
     trainer = MyTrainer(cfg)
     trainer.resume_or_load(resume=resume_or_load)
     trainer.train()
@@ -20,6 +23,7 @@ def train(cfg, resume_or_load: bool):
 
 def evaluate(cfg):
     trainer = MyTrainer(cfg)
+    setup_logger()
     trainer.resume_or_load(resume=True)
     metrics = MyTrainer.test(cfg, trainer.model)
     print(metrics)
