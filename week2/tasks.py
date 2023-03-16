@@ -25,10 +25,10 @@ def evaluate(cfg):
     print(metrics)
 
 
-def draw_seg(cfg, test_dataset: str, randomize: bool = True, num_images: int = 10, mapped: bool = False):
+def draw_seg(cfg, test_dataset: str, model_name: str, randomize: bool = True, num_images: int = 10, mapped: bool = False):
     predictor = DefaultPredictor(cfg)
 
-    out_dir = os.path.join(cfg.OUTPUT_DIR, cfg.DATASETS.TEST[0] + "preds_out")
+    out_dir = os.path.join(cfg.OUTPUT_DIR, cfg.DATASETS.TEST[0] + "_preds_out")
     os.makedirs(out_dir, exist_ok=True)
     
     cpa_metadata = MetadataCatalog.get(test_dataset)
@@ -42,7 +42,8 @@ def draw_seg(cfg, test_dataset: str, randomize: bool = True, num_images: int = 1
         outputs = predictor(img)
         v = Visualizer(img[:, :, ::-1],
                     scale=0.8, 
-                    instance_mode=ColorMode.SEGMENTATION  
+                    instance_mode=ColorMode.SEGMENTATION,
+                    metadata=cpa_metadata
         )
         # vis = v.draw_instance_predictions(outputs["instances"].to("cpu"))
         instances = outputs["instances"].to("cpu")
@@ -58,7 +59,7 @@ def draw_seg(cfg, test_dataset: str, randomize: bool = True, num_images: int = 1
         instances = instances[indices_to_keep]
 
         vis = v.draw_instance_predictions(instances)
-        cv2.imwrite(f"{out_dir}/{d['image_id']}.jpg", vis.get_image()[:, :, ::-1])
+        cv2.imwrite(f"{out_dir}/{d['image_id']}_{model_name}.jpg", vis.get_image()[:, :, ::-1])
 
 
 def draw_dataset(cfg, dataset_name: str, randomize: bool = True, num_images: int = 10):
@@ -93,3 +94,62 @@ def draw_dataset(cfg, dataset_name: str, randomize: bool = True, num_images: int
         visualizer = Visualizer(img[:, :, ::-1], metadata=MetadataCatalog.get(dataset_name), scale=0.5)
         vis = visualizer.draw_dataset_dict(d)
         cv2.imwrite(f"{out_dir}/gt_{d['image_id']}.jpg", vis.get_image()[:, :, ::-1])
+
+
+def draw_sequence(cfg, dataset_name: str, model_name: str, sequence: int, max_frames: int = 140, mapped: bool = False):
+    """
+    Create a video of the sequence and save it to the output directory
+    in the format: <sequence_number>.mp4
+
+    Args:
+        cfg (CfgNode): Detectron2 config
+        dataset_name (str): Name of the dataset
+        sequence (int): Sequence number in [0000, 0028]
+    """
+    predictor = DefaultPredictor(cfg)
+
+    out_dir = os.path.join(cfg.OUTPUT_DIR, cfg.DATASETS.TEST[0] + "_preds_seq_out")
+    os.makedirs(out_dir, exist_ok=True)
+    
+    cpa_metadata = MetadataCatalog.get(dataset_name)
+    dataset_dicts = DatasetCatalog.get(dataset_name)
+
+    # Dataset format: /[training,testing]/image_02/0001/000131.png
+    # Get the images for the sequence
+    sequence_images = [d for d in dataset_dicts if d["file_name"].split("/")[-2] == str(sequence).zfill(4)]
+
+    # Sort the images by frame number
+    sequence_images = sorted(sequence_images, key=lambda x: int(x["file_name"].split("/")[-1].split(".")[0]))[:max_frames]
+
+    height, width, layers = cv2.imread(sequence_images[0]["file_name"]).shape
+    print(height, width, layers)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    cap = cv2.VideoWriter(f"{out_dir}/{sequence}_{model_name}.mp4", fourcc, 10.0, (width, height))
+
+    for d in tqdm(sequence_images):
+        img = cv2.imread(d["file_name"])
+        outputs = predictor(img)
+        v = Visualizer(img[:, :, ::-1],
+                    scale=0.8, 
+                    instance_mode=ColorMode.SEGMENTATION,
+                    metadata=cpa_metadata
+        )
+        # vis = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+        instances = outputs["instances"].to("cpu")
+
+        classes_to_keep = ["car"]
+        classes_to_keep += ["person"] if mapped else ["pedestrian"]
+
+        # Get the indices of the classes to keep
+        class_indices = [cpa_metadata.thing_classes.index(cls) for cls in classes_to_keep]
+
+        # Filter instances based on the predicted class labels
+        indices_to_keep = [i for i in range(len(instances)) if instances.pred_classes[i] in class_indices]
+        instances = instances[indices_to_keep]
+
+        vis = v.draw_instance_predictions(instances)
+        vis_img = vis.get_image()[:, :, ::-1]
+        vis_img = cv2.resize(vis_img, (width, height))
+        cap.write(vis_img)
+
+    cap.release()

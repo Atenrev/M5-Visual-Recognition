@@ -23,7 +23,8 @@ def load_kitti_and_map_to_coco(dataset_name: str, dataset_dir: str, labels_path:
             if ann["image_id"] == image["id"]:
                 ann["category_id"] = class_dict[ann["category_id"]]
                 ann["bbox_mode"] = BoxMode.XYWH_ABS, # This is being converted to a tuple for some reason
-                ann["bbox_mode"] = ann["bbox_mode"][0] # So we need to get the first element, fuck this
+                if isinstance(ann["bbox_mode"], tuple):
+                    ann["bbox_mode"] = ann["bbox_mode"][0] # So we need to get the first element, fuck this
                 image["annotations"].append(ann)
 
         detectron_anns.append(image)
@@ -42,7 +43,6 @@ def load_kitti_and_map_to_coco(dataset_name: str, dataset_dir: str, labels_path:
     # Define the metadata
     metadata = {
         "thing_classes": coco_names,
-        # "thing_dataset_id_to_contiguous_id": {1: 2, 2: 0},
     }
 
     # Create the MetadataCatalog entry

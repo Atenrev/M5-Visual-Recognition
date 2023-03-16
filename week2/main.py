@@ -9,7 +9,7 @@ from detectron2.data.datasets import register_coco_instances
 from detectron2.data import DatasetCatalog
 
 from utils import load_kitti_and_map_to_coco
-from tasks import train, evaluate, draw_seg, draw_dataset
+from tasks import train, evaluate, draw_seg, draw_dataset, draw_sequence
 
 
 def _parse_args() -> argparse.Namespace:
@@ -20,7 +20,9 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(usage=usage_message)
 
     parser.add_argument("--mode", "-m", type=str, default="draw_dataset",
-                        help="Mode (train, eval, draw_seg)")
+                        help="Mode (train, eval, draw_seg, draw_sequence)")
+    parser.add_argument("--seed", "-s", type=int, default=42,
+                        help="Seed")
     # Model settings
     parser.add_argument("--model", "-mo", type=str, default="mask_rcnn",
                         help="Model (mask_rcnn, faster_rcnn)")
@@ -31,7 +33,7 @@ def _parse_args() -> argparse.Namespace:
     # Dataset settings
     parser.add_argument("--map_kitti_to_coco", action="store_true", default=False,
                         help="Map KITTI classes to COCO classes")
-    parser.add_argument("--dataset_dir", "-tr", type=str, default="/home/mcv/datasets/KITTI-MOTS/training",
+    parser.add_argument("--dataset_dir", "-tr", type=str, default="/home/mcv/datasets/KITTI-MOTS",
                         help="Train dataset name")
     parser.add_argument("--labels_dir", "-ld", type=str, default="./",
                         help="Train dataset name")
@@ -48,6 +50,9 @@ def _parse_args() -> argparse.Namespace:
                         help="Number of GPUs")
     parser.add_argument("--output_dir", "-od", type=str, default="output/",
                         help="Output directory")
+    # Other
+    parser.add_argument("--sequence", "-seq", type=str, default="0000",
+                        help="Sequence to draw in draw_sequence mode")
 
     return parser.parse_args()
 
@@ -67,8 +72,8 @@ def get_base_cfg(args):
         cfg.DATASETS.TEST = ("kitti_val",)
     elif args.mode == "eval":
         cfg.DATASETS.TEST = ("kitti_test",)
-    elif args.mode == "draw_seg":
-        cfg.DATASETS.TEST = ("kitti_test",)
+    elif args.mode == "draw_seg" or args.mode == "draw_sequence" or args.mode == "draw_dataset":
+        cfg.DATASETS.TEST = ("kitti_test_real",)
     else:
         cfg.DATASETS.TEST = ()
     cfg.DATALOADER.NUM_WORKERS = 1
@@ -95,7 +100,6 @@ def get_base_cfg(args):
         # Get number of samples in train dataset
         td = DatasetCatalog.get("kitti_train")
         n_samples = len(td)
-        print(n_samples)
         iterations_for_one_epoch = n_samples // single_iteration
         cfg.SOLVER.MAX_ITER = iterations_for_one_epoch * args.epochs
     
@@ -115,30 +119,41 @@ def main(args: argparse.Namespace):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
+    training_path = os.path.join(args.dataset_dir, "training")
+    testing_path = os.path.join(args.dataset_dir, "testing")
+
     if args.map_kitti_to_coco:
-        load_kitti_and_map_to_coco("kitti_train", args.dataset_dir, 
+        load_kitti_and_map_to_coco("kitti_train", training_path, 
                                    os.path.join(args.labels_dir, "labels_train_split.json"))
-        load_kitti_and_map_to_coco("kitti_val", args.dataset_dir, 
+        load_kitti_and_map_to_coco("kitti_val", training_path, 
                                    os.path.join(args.labels_dir, "labels_val_split.json"))
-        load_kitti_and_map_to_coco("kitti_test", args.dataset_dir, 
+        load_kitti_and_map_to_coco("kitti_test", training_path, 
                                    os.path.join(args.labels_dir, "labels_testing.json"))
+        load_kitti_and_map_to_coco("kitti_test_real", testing_path,
+                                      os.path.join(args.labels_dir, "labels_challenge.json"))
     else:
+        # To fintune on kitti we just need to register the dataset as coco
         register_coco_instances("kitti_train",
                                 {},
                                 os.path.join(args.labels_dir, "labels_train_split.json"),
-                                args.dataset_dir,
+                                training_path,
                                 )
         
         register_coco_instances("kitti_val",
                                 {},
                                 os.path.join(args.labels_dir, "labels_val_split.json"),
-                                args.dataset_dir,
+                                training_path,
                                 )
 
         register_coco_instances("kitti_test",
                                 {},
                                 os.path.join(args.labels_dir, "labels_testing.json"),
-                                args.dataset_dir,
+                                training_path,
+                                )
+        register_coco_instances("kitti_test_real",
+                                {},
+                                os.path.join(args.labels_dir, "labels_challenge.json"),
+                                testing_path,
                                 )
 
     cfg = get_base_cfg(args)
@@ -148,9 +163,11 @@ def main(args: argparse.Namespace):
     elif args.mode == "eval":
         evaluate(cfg)
     elif args.mode == "draw_seg":
-        draw_seg(cfg, "kitti_test", mapped=args.map_kitti_to_coco)
+        draw_seg(cfg, "kitti_test_real", args.model, mapped=args.map_kitti_to_coco)
     elif args.mode == "draw_dataset":
         draw_dataset(cfg, "kitti_train")
+    elif args.mode == "draw_sequence":
+        draw_sequence(cfg, "kitti_test_real", args.model, args.sequence, mapped=args.map_kitti_to_coco)
     else:
         raise Exception("Unknown mode.")
 

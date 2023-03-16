@@ -25,8 +25,6 @@ def _parse_args() -> argparse.Namespace:
 
     parser.add_argument("--ds_dir", "-m", type=str, default="/home/mcv/datasets/KITTI-MOTS/",
                         help="Dataset dir")
-    parser.add_argument("--split", "-s", type=str, default="training",
-                        help="Split (training, testing)")
 
     return parser.parse_args()
 
@@ -133,7 +131,7 @@ def create_split(image_paths, split: str = "training"):
         image_arr = cv2.imread(img_path)
         height, width = image_arr.shape[:2]
 
-        img_relative_path = os.path.relpath(img_path, os.path.join(args.ds_dir, args.split))
+        img_relative_path = os.path.relpath(img_path, os.path.join(args.ds_dir, "training" if split != "challenge" else "testing"))
         image_id = int(img_relative_path.split("/")[-2]) * 1000000 + int(img_relative_path.split("/")[-1].split(".")[0]) + 1
         image = {
             "id": image_id,
@@ -143,7 +141,10 @@ def create_split(image_paths, split: str = "training"):
             "license": None,
         }
 
-        images.append(image)    
+        images.append(image)  
+
+        if split == "challenge":
+            continue  
 
         # Annotations creation
         # Reference code: https://github.com/KevinJia1212/MOTS_Tools/blob/master/mots2coco.py
@@ -222,15 +223,18 @@ def main(args: argparse.Namespace):
     print("Creating COCO annotations")
 
     # Dataset format: /[training,testing]/image_02/0001/000131.png
-    all_image_paths = sorted(glob.glob(os.path.join(args.ds_dir, f"{args.split}/image_02/*/*.png")))
+    all_image_paths = sorted(glob.glob(os.path.join(args.ds_dir, f"training/image_02/*/*.png")))
     # Sequences 2, 6, 7, 8, 10, 13, 14, 16 and 18 were chosen for the validation set, the remaining sequences for the training set.
     # Training image paths 
     training_image_paths = [path for path in all_image_paths if int(path.split("/")[-2]) not in [2, 6, 7, 8, 10, 13, 14, 16, 18]]
     # Testing image paths 
     testing_image_paths = [path for path in all_image_paths if int(path.split("/")[-2]) in [2, 6, 7, 8, 10, 13, 14, 16, 18]]
+    # Challenge image paths
+    challenge_image_paths = sorted(glob.glob(os.path.join(args.ds_dir, "testing/image_02/*/*.png")))
 
     create_split(training_image_paths, split="training")
     create_split(testing_image_paths, split="testing")
+    create_split(challenge_image_paths, split="challenge")
     
 
 if __name__ == "__main__":
