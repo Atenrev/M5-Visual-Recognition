@@ -61,9 +61,9 @@ def get_base_cfg(args):
     cfg = get_cfg()
 
     if args.model == "mask_rcnn":
-        cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_X_101_32x8d_FPN_3x.yaml"))
+        cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml"))
     elif args.model == "faster_rcnn":
-        cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_X_101_32x8d_FPN_3x.yaml"))
+        cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml"))
     else:
         raise ValueError("Unknown model")
     
@@ -76,13 +76,13 @@ def get_base_cfg(args):
         cfg.DATASETS.TEST = ("kitti_test_real",)
     else:
         cfg.DATASETS.TEST = ()
-    cfg.DATALOADER.NUM_WORKERS = 1
+    cfg.DATALOADER.NUM_WORKERS = 0
 
     if args.checkpoint is None:
         if args.model == "mask_rcnn":
-            cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_X_101_32x8d_FPN_3x.yaml")
+            cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml")
         elif args.model == "faster_rcnn":
-            cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_X_101_32x8d_FPN_3x.yaml")
+            cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml")
     else:
         cfg.MODEL.WEIGHTS = args.checkpoint
 
@@ -112,7 +112,8 @@ def get_base_cfg(args):
     if args.head_num_classes is not None:
         cfg.MODEL.ROI_HEADS.NUM_CLASSES = args.head_num_classes
 
-    cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+    # cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+    cfg.MODEL.DEVICE = "cuda"
     cfg.OUTPUT_DIR = args.output_dir
 
     return cfg
