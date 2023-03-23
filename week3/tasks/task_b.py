@@ -108,7 +108,7 @@ def task_b_2(args):
 
     predictor = DefaultPredictor(cfg)
 
-    for img_path in dataset_path.glob("*.png"):
+    for img_path in dataset_path.glob("*.jpg"):
         print(f"{img_path}")
         im = cv2.imread(str(img_path))
 
