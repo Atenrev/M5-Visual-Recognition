@@ -3,7 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 detectron2-1/
-detectron2_1/
 # C extensions
 *.so
 
