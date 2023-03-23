@@ -15,79 +15,69 @@ def task_b_1(cfg, args):
     data_dir = Path("./data/mscoco/annotations")
     out_dir = Path("./output/task_b")
 
+    # load data
     with open(data_dir / "captions_train2017.json", 'r') as f_json:
         captions = json.load(f_json)
 
     with open(data_dir / "instances_train2017.json", 'r') as f_json:
         instances = json.load(f_json)
 
-    print(list(captions.keys()))
-    print(list(instances.keys()))
-
-    print(captions["annotations"][:3])
-    print(instances["annotations"][:3])
-
     # get categories and class names
-    cat_objs = instances["categories"]
-    cat_objs.sort(key=lambda x: x["id"])
-    num_classes = cat_objs[-1]["id"]
+    categories = instances["categories"]
+    categories.sort(key=lambda x: x["id"])
+    n_class = categories[-1]["id"]
 
-    class_names = ["" for _ in range(num_classes + 1)]
-    for x in cat_objs:
-        class_names[x["id"] - 1] = x["name"]
+    classes = ["" for _ in range(n_class + 1)]
+    for x in categories:
+        classes[x["id"] - 1] = x["name"]
 
     # get image to class mapping
-    img_to_class = {}
+    img_class = {}
 
     for x in instances["annotations"]:
-        if x["image_id"] not in img_to_class.keys():
-            img_to_class[x["image_id"]] = []
-        img_to_class[x["image_id"]].append(x["category_id"])
+        if x["image_id"] not in img_class.keys():
+            img_class[x["image_id"]] = []
+        img_class[x["image_id"]].append(x["category_id"])
 
     # get class to class co-occurrence matrix
-    counts = np.zeros((len(class_names), len(class_names)), dtype=int)
+    cnts = np.zeros((len(classes), len(classes)), dtype=int)
 
-    for k, v in img_to_class.items():
+    for k, v in img_class.items():
         v = list(set(v))
         v.sort()
-        for ii in range(len(v)):
-            for jj in range(ii, len(v)):
-                counts[v[ii] - 1, v[jj] - 1] += 1
+        for i in range(len(v)):
+            for j in range(i, len(v)):
+                cnts[v[i] - 1, v[j] - 1] += 1
 
-    n_images = len(instances["images"])
+    n_imgs = len(instances["images"])
 
     # get class probabilities
-    diagonal_ind = np.diag(np.ones(len(class_names), dtype=bool))
-    class_counts = counts[diagonal_ind]
-    counts[diagonal_ind] = 0
+    diag_cnts = np.diag(np.ones(len(classes), dtype=bool))
+    cnts_class = cnts[diag_cnts]
+    cnts[diag_cnts] = 0
 
-    counts += counts.T
-    counts[diagonal_ind] += class_counts
+    cnts += cnts.T
+    cnts[diag_cnts] += cnts_class
 
-    class_probs = class_counts / n_images
-    jprobs = counts.astype(float) / n_images
-    cprobs = jprobs / class_probs[:, None]
+    probas_class = cnts_class / n_imgs
+    joint_probas = cnts.astype(float) / n_imgs
+    cond_probas = joint_probas / probas_class[:, None]
 
-    class_probs = pd.DataFrame(class_probs, index=class_names)
-    counts = pd.DataFrame(counts, index=class_names, columns=class_names)
-    jprobs = pd.DataFrame(jprobs, index=class_names, columns=class_names)
-    cprobs = pd.DataFrame(cprobs, index=class_names, columns=class_names)
+    probas_class = pd.DataFrame(probas_class, index=classes)
+    cnts = pd.DataFrame(cnts, index=classes, columns=classes)
+    joint_probas = pd.DataFrame(joint_probas, index=classes, columns=classes)
+    cond_probas = pd.DataFrame(cond_probas, index=classes, columns=classes)
 
-    print(counts.head())
-    print(jprobs.head())
-    print(cprobs.head())
-    print(class_probs.head())
+    # save results to out_dir
+    cnts.to_csv(out_dir / "cnts.csv")
+    joint_probas.to_csv(out_dir / "joint_probas.csv")
+    cond_probas.to_csv(out_dir / "cond_probas.csv")
+    probas_class.to_csv(out_dir / "probas_class.csv")
 
-    # save out_dir
-    counts.to_csv(out_dir / "counts.csv")
-    jprobs.to_csv(out_dir / "jprobs.csv")
-    cprobs.to_csv(out_dir / "cprobs.csv")
-    class_probs.to_csv(out_dir / "class_probs.csv")
-
-    counts.to_markdown(out_dir / "counts.md")
-    jprobs.to_markdown(out_dir / "jprobs.md")
-    cprobs.to_markdown(out_dir / "cprobs.md")
-    class_probs.to_markdown(out_dir / "class_probs.md")
+    cnts.to_markdown(out_dir / "cnts.md")
+    joint_probas.to_markdown(out_dir / "joint_probas.md")
+    cond_probas.to_markdown(out_dir / "cond_probas.md")
+    probas_class.to_markdown(out_dir / "probas_class.md")
 
 
 MODELS = {
@@ -108,20 +98,20 @@ def task_b_2(args):
 
     predictor = DefaultPredictor(cfg)
 
-    for img_path in dataset_path.glob("*.jpg"):
-        print(f"{img_path}")
-        im = cv2.imread(str(img_path))
+    for path_to_img in dataset_path.glob("*.jpg"):
+        print(f"{path_to_img}")
+        im = cv2.imread(str(path_to_img))
 
-        # Inference
-        outputs = predictor(im)
-        v = Visualizer(
+        # run inference
+        outs = predictor(im)
+        viz = Visualizer(
             im[:, :, ::-1],
             MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1.2
         )
-        out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+        out = viz.draw_instance_predictions(outs["instances"].to("cpu"))
 
         cv2.imwrite(
-            str(out_path / img_path.parts[-1]),
+            str(out_path / path_to_img.parts[-1]),
             out.get_image()[:, :, ::-1],
             [int(cv2.IMWRITE_PNG_COMPRESSION), 9]
         )
