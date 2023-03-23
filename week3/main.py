@@ -2,8 +2,8 @@ import argparse
 import numpy as np
 import torch
 
-from detectron2 import model_zoo
-from detectron2.config import get_cfg
+# from detectron2 import model_zoo
+# from detectron2.config import get_cfg
 
 from datasets.register_coco import register_coco_dataset
 from datasets.register_out_of_context import register_out_of_context_dataset
@@ -67,14 +67,15 @@ def main(args: argparse.Namespace):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
-    cfg = get_base_cfg(args)
+    # cfg = get_base_cfg(args)
+    cfg = 'asdf'
 
-    if args.load_dataset == "coco":
-        register_coco_dataset(cfg)
-    elif args.load_dataset == "out_of_context":
-        register_out_of_context_dataset(cfg)
-    else:
-        raise ValueError("Dataset not implemented.")
+    # if args.load_dataset == "coco":
+    #     register_coco_dataset(cfg)
+    # elif args.load_dataset == "out_of_context":
+    #     register_out_of_context_dataset(cfg)
+    # else:
+    #     raise ValueError("Dataset not implemented.")
 
     if args.mode == "task_a":
         task_a.run(cfg, args)
