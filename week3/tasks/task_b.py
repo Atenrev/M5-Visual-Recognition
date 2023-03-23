@@ -119,7 +119,8 @@ def task_b_2(args):
 
 def run(cfg, args):
 
-    # task_b_1(cfg, args)
+    task_b_1(cfg, args)
+
     args.dataset_path = "./data/mscoco/task_b"
     args.out_path = "./output/task_b"
     args.model = "mask"
