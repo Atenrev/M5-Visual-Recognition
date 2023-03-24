@@ -29,7 +29,9 @@ def run_model_on_images(cfg, input_dir, output_dir):
         )
 
         v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-        out_path = os.path.join(output_dir, os.path.basename(img_path))
+        # Output path: output_dir/model_name/<img_name>
+        model_name = cfg.MODEL.WEIGHTS.split("/")[-1].split(".")[0]
+        out_path = os.path.join(output_dir, model_name, os.path.basename(img_path))
         cv2.imwrite(out_path, v.get_image()[:, :, ::-1])
 
 
