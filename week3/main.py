@@ -21,6 +21,8 @@ def _parse_args() -> argparse.Namespace:
                         help="Mode (task_a, task_b, task_c, task_d, task_e)")
     parser.add_argument("--seed", "-s", type=int, default=42,
                         help="Seed")
+    parser.add_argument("--output_dir", "-o", type=str, default="output",
+                        help="Output directory")
     # Model settings
     parser.add_argument("--model", "-mo", type=str, default="mask_rcnn",
                         help="Model (mask_rcnn, faster_rcnn)")

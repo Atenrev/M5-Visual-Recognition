@@ -1,6 +1,7 @@
 import os
 import cv2
 
+from tqdm import tqdm
 from detectron2.engine import DefaultPredictor
 from detectron2.utils.visualizer import Visualizer, ColorMode
 from detectron2.data import MetadataCatalog
@@ -16,7 +17,7 @@ def run_model_on_images(cfg, input_dir, output_dir):
 
     os.makedirs(output_dir, exist_ok=True)
 
-    for img_path in img_paths:
+    for img_path in tqdm(img_paths):
         img = cv2.imread(img_path)
         outputs = predictor(img)
 
