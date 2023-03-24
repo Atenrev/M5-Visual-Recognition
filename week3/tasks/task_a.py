@@ -15,6 +15,8 @@ def run_model_on_images(cfg, input_dir, output_dir):
     img_paths = [os.path.join(input_dir, f) for f in os.listdir(
         input_dir) if os.path.isfile(os.path.join(input_dir, f))]
 
+    model_name = cfg.MODEL.WEIGHTS.split("/")[-1].split(".")[0]
+    output_dir = os.path.join(output_dir, model_name)
     os.makedirs(output_dir, exist_ok=True)
 
     for img_path in tqdm(img_paths):
@@ -29,9 +31,7 @@ def run_model_on_images(cfg, input_dir, output_dir):
         )
 
         v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-        # Output path: output_dir/model_name/<img_name>
-        model_name = cfg.MODEL.WEIGHTS.split("/")[-1].split(".")[0]
-        out_path = os.path.join(output_dir, model_name, os.path.basename(img_path))
+        out_path = os.path.join(output_dir, os.path.basename(img_path))
         cv2.imwrite(out_path, v.get_image()[:, :, ::-1])
 
 
