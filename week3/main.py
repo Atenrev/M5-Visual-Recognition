@@ -29,7 +29,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--checkpoint", "-ch", type=str, default=None,
                         help="Model weights path")
     # Dataset settings
-    parser.add_argument("--load_dataset", "-tr", type=str, default="coco",
+    parser.add_argument("--load_dataset", "-tr", type=str, default=None,
                         help="Load dataset")
     # Other
     parser.add_argument("--sequence", "-seq", type=str, default="0000",
@@ -74,8 +74,6 @@ def main(args: argparse.Namespace):
         register_coco_dataset(cfg)
     elif args.load_dataset == "out_of_context":
         register_out_of_context_dataset(cfg)
-    else:
-        raise ValueError("Dataset not implemented.")
 
     if args.mode == "task_a":
         task_a.run(cfg, args)
