@@ -56,7 +56,6 @@ def get_base_cfg(args):
     else:
         cfg.MODEL.WEIGHTS = args.checkpoint
 
-    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
     cfg.MODEL.DEVICE = "cuda"
     cfg.OUTPUT_DIR = args.output_dir
 
