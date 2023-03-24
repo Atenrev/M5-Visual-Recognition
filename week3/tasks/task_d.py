@@ -1,6 +1,6 @@
 from pathlib import Path
 from detectron2.config import get_cfg
-from detectron2.adv import DAGAttacker
+# from detectron2.adv import DAGAttacker
 from detectron2.structures import pairwise_iou, Boxes
 from detectron2 import model_zoo
 import torch
@@ -26,9 +26,10 @@ def run_adv(cfg, args,):
 
     # credits: https://github.com/yizhe-ang/detectron2-1/blob/master/notebooks/adv.ipynb
 
-    attacker = DAGAttacker(cfg)
+    # attacker = DAGAttacker(cfg) ########## COMMENTED UNTIL IT WORKS
 
-    coco_instances_results, perturbed = attacker.run_DAG(vis=False)
+    # coco_instances_results, perturbed = attacker.run_DAG(vis=False)
+    pass
 
 
 def run_naive(cfg, args):
