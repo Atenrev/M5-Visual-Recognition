@@ -30,7 +30,7 @@ def fgsm_attack(image, epsilon, data_grad):
     # Return the perturbed image
     return perturbed_image
 
-def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsize = 1024):
+def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 1, imsize = 1024):
 
     npimage = cv2.imread(attacked_image)
     data = torch.from_numpy(npimage.transpose(2, 0, 1)).float().to(device) 
@@ -49,6 +49,8 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
     loss = torch.nn.BCELoss()
     for step in range(steps):
 
+        model.zero_grad()
+
         print(data.min(), data.max(), data.shape)
         output = model([{'image': data}])[0]
         print(output)
@@ -56,7 +58,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
         fake_scores = torch.zeros_like(scores)
         
         loss_value = loss(scores.unsqueeze(0), fake_scores.unsqueeze(0))
-        model.zero_grad()
+        print(loss_value)
         loss_value.backward()
         data_grad = data.grad
         print(data_grad)
