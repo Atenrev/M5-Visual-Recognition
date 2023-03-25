@@ -15,7 +15,7 @@ from src.trainer import Trainer
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default="xception",
+    parser.add_argument('--model', type=str, default="small_squeeze_net",
                         help='Model to run')
     parser.add_argument('--dataset_config', type=str, default="mit_split_base",
                         help='Dataset config to use')
@@ -23,11 +23,11 @@ def parse_args() -> argparse.Namespace:
                         help='Trainer params to use')
     parser.add_argument('--dataset_dir', type=str, default="datasets/folds/MIT_small_train_1/",
                         help='Dataset directory path')
-    parser.add_argument('--mode', type=str, default="train",
+    parser.add_argument('--mode', type=str, default="eval",
                         help='Execution mode ("train", "eval" or "summary")')
-    parser.add_argument('--load_checkpoint', type=str, default=None,
+    parser.add_argument('--load_checkpoint', type=str, default="local/squeezeenet.pt",
                         help='Path to model checkpoint')
-    parser.add_argument('--batch_size', type=int, default=4,
+    parser.add_argument('--batch_size', type=int, default=32,
                         help='Batch size')
     parser.add_argument('--seed', type=int, default=42, help='Seed to use')
 
