@@ -58,7 +58,8 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
         loss_value = loss(scores.unsqueeze(0), fake_scores.unsqueeze(0))
         model.zero_grad()
         loss_value.backward()
-        data_grad = data.grad.data
+        data_grad = data.grad
+        print(data_grad)
         perturbed_data = fgsm_attack(data, 0.01, data_grad)
         data = perturbed_data
                 
