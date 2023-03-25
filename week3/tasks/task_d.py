@@ -50,7 +50,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
 
         print(data.min(), data.max(), data.shape)
         output = model([{'image': data}])[0]
-        print(list(output.keys()))
+        print(output)
         scores = output['instances'].scores
         print(scores)
         break        
