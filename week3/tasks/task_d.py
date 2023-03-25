@@ -32,6 +32,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     model = predictor.model
 
     print(image.shape)
+    print(model)
     print(model([image]))
 # i give up i went crazy
 
