@@ -23,6 +23,7 @@ device = 'cuda'
 def fgsm_attack(image, epsilon, data_grad):
     # Collect the element-wise sign of the data gradient
     sign_data_grad = data_grad.sign()
+
     # Create the perturbed image by adjusting each pixel of the input image
     perturbed_image = image + epsilon*sign_data_grad
     # Adding clipping to maintain [0,1] range
@@ -62,7 +63,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 1, imsize
         loss_value.backward()
         data_grad = data.grad
         print(data_grad)
-        perturbed_data = fgsm_attack(data, 0.01, data_grad)
+        perturbed_data = fgsm_attack(data, 10, data_grad)
         data = perturbed_data
                 
     #### VISUALIZER ZONE #####
