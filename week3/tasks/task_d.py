@@ -50,7 +50,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 5, imsize
     loss = torch.nn.BCELoss()
     for step in range(steps):
 
-        model.zero_grad(), data.zero_grad()
+        model.zero_grad()
 
         print(data.min(), data.max(), data.shape)
         output = model([{'image': data}])[0]
@@ -64,6 +64,8 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 5, imsize
         data_grad = data.grad
         perturbed_data = fgsm_attack(data, 10, data_grad)
         data = perturbed_data
+        data.detach()
+        data.requires_grad = True
                 
     #### VISUALIZER ZONE #####
     adversarial_image = data.cpu().detach().numpy()
