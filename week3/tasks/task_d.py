@@ -64,8 +64,6 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 5, imsize
         data_grad = data.grad
         perturbed_data = fgsm_attack(data, 10, data_grad)
         data = perturbed_data
-        data.detach()
-        data.requires_grad = True
                 
     #### VISUALIZER ZONE #####
     adversarial_image = data.cpu().detach().numpy()
