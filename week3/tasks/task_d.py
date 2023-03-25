@@ -41,19 +41,19 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 100, imsi
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(MODEL)
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
 
-    # Normalize the input image
-    data.requires_grad = True
-    
+    # Normalize the input image    
 
     predictor = DefaultPredictor(cfg)
     model = predictor.model
     loss = torch.nn.BCELoss()
-    perturbed_data = None
+    perturbation = torch.rand_like(data)
+    perturbation.requires_grad = True
     for step in range(steps):
 
         model.zero_grad()
 
-        output = model([{'image': data}])[0]
+        input_data = torch.clamp(data + perturbation * 127, 0, 255)
+        output = model([{'image': input_data}])[0]
         scores = output['instances'].scores
         fake_scores = torch.zeros_like(scores)
         
@@ -61,15 +61,17 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 100, imsi
         print(loss_value.item())
 
         loss_value.backward()
-        data_grad = data.grad
-        perturbed_data = fgsm_attack(data, 150, data_grad)
-        perturbed_data = perturbed_data.detach().cpu().numpy()
-        data = torch.from_numpy(perturbed_data).to(device)
-        data.requires_grad = True
+        data_grad = perturbation.grad
+        #perturbed_data = fgsm_attack(data, 150, data_grad)
+        perturbation = perturbation + data_grad * 0.1
+        
+        perturbed_data = perturbation.detach().cpu().numpy()
+        perturbation = torch.from_numpy(perturbed_data).to(device)
+        perturbation.requires_grad = True
         #perturbed_data = torch.from_numpy(perturbed_data)
                 
     #### VISUALIZER ZONE #####
-    adversarial_image = data.cpu().detach().numpy()
+    adversarial_image = data.cpu().detach().numpy() + perturbation * 127
     print('writting image shape', adversarial_image.shape)
     adversarial_image = adversarial_image.transpose(1, 2, 0)
     outs = predictor(adversarial_image)
