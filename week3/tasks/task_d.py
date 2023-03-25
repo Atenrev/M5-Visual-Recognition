@@ -43,5 +43,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     print(image.shape)
     output = model([{'image': tensor_image}])
 
+    print(output)
+
 if __name__ == '__main__': 
     task_d()
