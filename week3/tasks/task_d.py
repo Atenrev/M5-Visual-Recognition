@@ -61,6 +61,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
 
     #### VISUALIZER ZONE #####
     adversarial_image = data.cpu().detach().numpy()
+    print('writting image shape', adversarial_image.shape)
     adversarial_image = adversarial_image.transpose(1, 2, 0)
     outs = predictor(adversarial_image)
     viz = Visualizer(
@@ -68,6 +69,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
         MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1.2
     )
     out = viz.draw_instance_predictions(outs["instances"].to("cpu"))
+    print(out.get_image().shape)
 
     cv2.imwrite(
         'tmp.png',
