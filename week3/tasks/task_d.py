@@ -22,13 +22,14 @@ MODELS = {
 
 image_path =  '/home/adri/Desktop/master/M5/M5-Visual-Recognition/week3/data/mscoco/task_c/000000004036.jpg' # Yes We are doing It That Way
 
-def run_adv(cfg, ):
+def run_adv():
 
     # credits: https://github.com/yizhe-ang/detectron2-1/blob/master/notebooks/adv.ipynb
 
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
     attacker = DAGAttacker(cfg)
+    print('hello')
 
 
     for batch in attacker.data_loader:
@@ -63,3 +64,7 @@ def predict(image, model, cfg):
 
 def run(cfg, args):
     run_adv(cfg, args)
+
+
+if __name__ == '__main__': 
+    run_adv()
