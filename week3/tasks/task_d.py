@@ -54,12 +54,13 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     perturbation = epsilon * torch.sign(tensor_image.grad)
 
     # Add the perturbation to the original image to create the adversarial example
-    adversarial_image = image + perturbation.detach().numpy()
+    adversarial_image = image + perturbation.cpu().detach().numpy()
 
     # Ensure that the adversarial image is within the valid range of values (0 to 1)
     adversarial_image = np.clip(adversarial_image, 0, 1)
 
     print(adversarial_image)
+    
 
 if __name__ == '__main__': 
     task_d()
