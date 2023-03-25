@@ -55,7 +55,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 400, imsi
 
         input_data = torch.clamp(data + perturbation * 127, 0, 255)
         output = model([{'image': input_data}])[0]
-        idx = torch.argmax(output['instances'].scores)
+        idx = torch.argmin(output['instances'].scores)
         scores = output['instances'].scores[idx]
         fake_scores = torch.zeros_like(scores)
         
@@ -65,7 +65,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 400, imsi
         loss_value.backward()
         data_grad = perturbation.grad
         #perturbed_data = fgsm_attack(data, 150, data_grad)
-        perturbation = perturbation + data_grad * 0.15
+        perturbation = perturbation + data_grad * 0.5
         
         perturbed_data = perturbation.detach().cpu().numpy()
         perturbation = torch.from_numpy(perturbed_data).to(device)
