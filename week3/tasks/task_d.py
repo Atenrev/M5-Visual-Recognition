@@ -22,6 +22,8 @@ device = 'cuda'
 
 def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
 
+    npimage = cv2.imread(attacked_image)
+    cv2.resize(npimage, (224, int(224 * npimage.shape[0]/npimage.shape[1]) ))
     image = torch.from_numpy(cv2.imread(attacked_image).transpose(2, 0, 1)).float().to(device)
 
     cfg = get_cfg()
@@ -33,7 +35,6 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     model = predictor.model.backbone
 
     print(image.shape)
-    print(model)
     print(model(image.unsqueeze(0)).shape)
 # i give up i went crazy
 
