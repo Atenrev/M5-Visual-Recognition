@@ -27,7 +27,13 @@ def run_adv():
     # credits: https://github.com/yizhe-ang/detectron2-1/blob/master/notebooks/adv.ipynb
 
     cfg = get_cfg()
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
+    MODEL = MODELS['mask']
+    cfg = get_cfg()
+    cfg.merge_from_file(model_zoo.get_config_file(MODEL))
+    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(MODEL)
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
+
+    predictor = DefaultPredictor(cfg)
     attacker = DAGAttacker(cfg)
     print('hello')
 
