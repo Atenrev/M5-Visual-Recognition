@@ -48,23 +48,25 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 15, imsiz
     predictor = DefaultPredictor(cfg)
     model = predictor.model
     loss = torch.nn.BCELoss()
+    perturbed_data = None
     for step in range(steps):
 
         model.zero_grad()
 
-        print(data.min(), data.max(), data.shape)
         output = model([{'image': data}])[0]
         scores = output['instances'].scores
         fake_scores = torch.zeros_like(scores)
         
         loss_value = loss(scores.unsqueeze(0), fake_scores.unsqueeze(0))
-        print(loss_value)
+        print(loss_value.item())
 
         loss_value.backward()
         data_grad = data.grad
-        perturbed_data = fgsm_attack(data, 50, data_grad)
-        data = torch.from_numpy(perturbed_data.detach().cpu().numpy()).to(device)
+        perturbed_data = fgsm_attack(data, 5, data_grad)
+        perturbed_data = perturbed_data.detach().cpu().numpy()
+        data = torch.from_numpy(perturbed_data).to(device)
         data.requires_grad = True
+        #perturbed_data = torch.from_numpy(perturbed_data)
                 
     #### VISUALIZER ZONE #####
     adversarial_image = data.cpu().detach().numpy()
