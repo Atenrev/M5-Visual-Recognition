@@ -32,8 +32,8 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
 
     # Normalize the input image
-    mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(3, 1, 1)
-    std = torch.tensor(cfg.MODEL.PIXEL_STD).view(3, 1, 1)
+    mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(3, 1, 1).to(device)
+    std = torch.tensor(cfg.MODEL.PIXEL_STD).view(3, 1, 1).to(device)
     tensor_image = (image - mean) / std
 
 
