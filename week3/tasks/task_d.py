@@ -55,6 +55,8 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 500, imsi
 
         input_data = torch.clamp(data + perturbation * 127, 0, 255)
         output = model([{'image': input_data}])[0]
+        if not len(output['instances'].scores): break
+
         idx = torch.argmax(output['instances'].scores)
         scores = output['instances'].scores[idx]
         fake_scores = torch.zeros_like(scores)
