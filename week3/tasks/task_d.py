@@ -34,7 +34,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10):
 
     npimage = cv2.imread(attacked_image)
     npimage = cv2.resize(npimage, (224, int(224 * npimage.shape[0]/npimage.shape[1]) ))
-    image = torch.from_numpy(npimage.transpose(2, 0, 1)).float().to(device)
+    image = torch.from_numpy(npimage.transpose(2, 0, 1)).float().to(device) / 255
 
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file(MODEL))
