@@ -31,9 +31,10 @@ def fgsm_attack(image, epsilon, data_grad):
     # Return the perturbed image
     return perturbed_image
 
-def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 50, imsize = 1024):
+def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 100, imsize = 1024):
 
     npimage = cv2.imread(attacked_image)
+    h, w, c = npimage.shape
     data = torch.from_numpy(npimage.transpose(2, 0, 1)).float().to(device) 
 
     cfg = get_cfg()
@@ -57,7 +58,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 50, imsiz
         scores = output['instances'].scores
         fake_scores = torch.zeros_like(scores)
         
-        loss_value = loss(scores.unsqueeze(0), fake_scores.unsqueeze(0))
+        loss_value = loss(scores.unsqueeze(0), fake_scores.unsqueeze(0)) - torch.sum((perturbation.view(-1)**2)) / (h * w)
         print(loss_value.item())
 
         loss_value.backward()
@@ -71,7 +72,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 50, imsiz
         #perturbed_data = torch.from_numpy(perturbed_data)
                 
     #### VISUALIZER ZONE #####
-    adversarial_image = data.cpu().detach().numpy() + perturbation.cpu().detach().numpy() * 127
+    adversarial_image = np.clip(data.cpu().detach().numpy() + perturbation.cpu().detach().numpy() * 127, 0, 255)
     print('writting image shape', adversarial_image.shape)
     adversarial_image = adversarial_image.transpose(1, 2, 0)
     outs = predictor(adversarial_image)
