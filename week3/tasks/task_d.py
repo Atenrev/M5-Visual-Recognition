@@ -60,7 +60,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
 
 
     #### VISUALIZER ZONE #####
-    adversarial_image = cv2.cvtColor(data.cpu().detach().numpy(), cv2.COLOR_RGB2BGR)
+    adversarial_image = data.cpu().detach().numpy()
     adversarial_image = adversarial_image.transpose(1, 2, 0)
     outs = predictor(adversarial_image)
     viz = Visualizer(
@@ -72,7 +72,6 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
     cv2.imwrite(
         'tmp.png',
         out.get_image()[:, :, ::-1],
-        [int(cv2.IMWRITE_PNG_COMPRESSION), 9]
     )
 
 
