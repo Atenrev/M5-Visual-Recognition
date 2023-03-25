@@ -29,7 +29,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
 
     predictor = DefaultPredictor(cfg)
-    model = predictor.model
+    model = predictor.model.backbone
 
     print(image.shape)
     print(model)
