@@ -20,7 +20,17 @@ MODELS = {
 MODEL = MODELS['mask']
 device = 'cuda'
 
-def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
+def fgsm_attack(image, epsilon, data_grad):
+    # Collect the element-wise sign of the data gradient
+    sign_data_grad = data_grad.sign()
+    # Create the perturbed image by adjusting each pixel of the input image
+    perturbed_image = image + epsilon*sign_data_grad
+    # Adding clipping to maintain [0,1] range
+    perturbed_image = torch.clamp(perturbed_image, 0, 1)
+    # Return the perturbed image
+    return perturbed_image
+
+def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10):
 
     npimage = cv2.imread(attacked_image)
     npimage = cv2.resize(npimage, (224, int(224 * npimage.shape[0]/npimage.shape[1]) ))
@@ -34,34 +44,26 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     # Normalize the input image
     mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(3, 1, 1).to(device)
     std = torch.tensor(cfg.MODEL.PIXEL_STD).view(3, 1, 1).to(device)
-    tensor_image = (image - mean) / std
-
+    data = (image - mean) / std
+    
 
     predictor = DefaultPredictor(cfg)
     model = predictor.model
+    for step in range(steps):
 
-    epsilon = 0.01
-    tensor_image.requires_grad = True
-    output = model([{'image': tensor_image}])
-    logits = output[0]['instances'].scores
+        print(data.min(), data.max())
+        output = model([{'image': data}])
+        0/0 # ME QUIERO MATAR
+        
 
-    target = torch.ones_like(logits).to(device)  # the target class index (set to 0 for simplicity)
-    print(logits.shape, target.shape)
-    loss = torch.nn.functional.cross_entropy(logits, target)
-    loss.backward()
 
-    # Use the sign of the gradients to generate the perturbation
-    print(tensor_image.grad.sum(-1))
-    perturbation = epsilon * torch.sign(tensor_image.grad)
 
-    # Add the perturbation to the original image to create the adversarial example
-    adversarial_image = tensor_image + perturbation
 
-    # Ensure that the adversarial image is within the valid range of values (0 to 1)
-    adversarial_image = torch.clip(adversarial_image, 0, 1).detach().cpu().numpy()
 
-    print(adversarial_image)
-    # run inference
+
+
+
+    #### VISUALIZER ZONE #####
     adversarial_image = adversarial_image.transpose(1, 2, 0)
     outs = predictor(adversarial_image)
     viz = Visualizer(
