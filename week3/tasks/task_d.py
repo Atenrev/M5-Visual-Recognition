@@ -31,7 +31,7 @@ def fgsm_attack(image, epsilon, data_grad):
     # Return the perturbed image
     return perturbed_image
 
-def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 150, imsize = 1024):
+def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 500, imsize = 1024):
 
     npimage = cv2.imread(attacked_image)
     h, w, c = npimage.shape
