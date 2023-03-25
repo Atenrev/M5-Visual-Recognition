@@ -33,7 +33,7 @@ def run_adv():
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
 
     predictor = DefaultPredictor(cfg)
-    #attacker = DAGAttacker(cfg)
+    attacker = DAGAttacker(cfg)
     print('hello')
 
 
