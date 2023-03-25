@@ -21,7 +21,7 @@ MODEL = MODELS['mask']
 
 def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
 
-    image = torch.from_numpy(cv2.imread(attacked_image).transpose(2, 0, 1)).unsqueeze(0)
+    image = torch.from_numpy(cv2.imread(attacked_image).transpose(2, 0, 1))
 
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file(MODEL))
