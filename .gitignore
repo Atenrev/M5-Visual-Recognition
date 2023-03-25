@@ -105,7 +105,6 @@ ENV/
 
 pretrained_weights/
 /reports/
-data/
 /dataset/
 /models/
 /runs/
