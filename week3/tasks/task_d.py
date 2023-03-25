@@ -31,7 +31,7 @@ def fgsm_attack(image, epsilon, data_grad):
     # Return the perturbed image
     return perturbed_image
 
-def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 500, imsize = 1024):
+def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 75, imsize = 1024):
 
     npimage = cv2.imread(attacked_image)
     h, w, c = npimage.shape
@@ -55,7 +55,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 500, imsi
 
         input_data = torch.clamp(data + perturbation * 127, 0, 255)
         output = model([{'image': input_data}])[0]
-        idx = torch.argmin(output['instances'].scores)
+        idx = torch.argmax(output['instances'].scores)
         scores = output['instances'].scores[idx]
         fake_scores = torch.zeros_like(scores)
         
