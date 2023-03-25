@@ -19,7 +19,7 @@ MODELS = {
 
 MODEL = MODELS['mask']
 
-def task_d(*args, attacked_image = './week3/data/weird/el_bone.jpg'):
+def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
 
     image = torch.tensor(Image.open(attacked_image)).unsqueeze(0)
 
