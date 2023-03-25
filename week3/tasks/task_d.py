@@ -32,7 +32,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     model = predictor.model
 
     print(image.shape)
-    print(model(image))
+    print(model([image]))
 # i give up i went crazy
 
 if __name__ == '__main__': 
