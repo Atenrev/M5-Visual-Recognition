@@ -3,6 +3,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import cv2
+from PIL import Image
+import torch
 
 from detectron2 import model_zoo
 from detectron2.config import get_cfg
@@ -17,14 +19,20 @@ MODELS = {
 
 MODEL = MODELS['mask']
 
-def task_d(*args):
+def task_d(*args, attacked_image = './week3/data/weird/el_bone.jpg'):
+
+    image = torch.tensor(Image.open(attacked_image)).unsqueeze(0)
+
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file(MODEL))
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(MODEL)
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
 
     predictor = DefaultPredictor(cfg)
-    print(predictor.model)
+    model = predictor.model
+
+    print(image.shape)
+    print(model(image))
 # i give up i went crazy
 
 if __name__ == '__main__': 
