@@ -58,7 +58,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 100, imsi
         scores = output['instances'].scores
         fake_scores = torch.zeros_like(scores)
         
-        loss_value = loss(scores.unsqueeze(0), fake_scores.unsqueeze(0)) - torch.sum((perturbation.view(-1)**2)) / (h * w)
+        loss_value = loss(scores.unsqueeze(0), fake_scores.unsqueeze(0)) - torch.sum((perturbation**2), dim = -1) / (h * w)
         print(loss_value.item())
 
         loss_value.backward()
