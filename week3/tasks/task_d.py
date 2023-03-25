@@ -50,7 +50,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     loss = torch.nn.functional.cross_entropy(logits, target)
     loss.backward()
 
-        # Use the sign of the gradients to generate the perturbation
+    # Use the sign of the gradients to generate the perturbation
     perturbation = epsilon * torch.sign(tensor_image.grad)
 
     # Add the perturbation to the original image to create the adversarial example
@@ -60,7 +60,20 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     adversarial_image = np.clip(adversarial_image, 0, 1)
 
     print(adversarial_image)
-    
+    # run inference
+    outs = predictor(adversarial_image)
+    viz = Visualizer(
+        adversarial_image[:, :, ::-1],
+        MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1.2
+    )
+    out = viz.draw_instance_predictions(outs["instances"].to("cpu"))
+
+    cv2.imwrite(
+        'tmp.png',
+        out.get_image()[:, :, ::-1],
+        [int(cv2.IMWRITE_PNG_COMPRESSION), 9]
+    )
+
 
 if __name__ == '__main__': 
     task_d()
