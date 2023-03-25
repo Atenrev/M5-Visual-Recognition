@@ -45,7 +45,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     output = model([{'image': tensor_image}])
     logits = output[0]['instances'].scores
 
-    target = torch.tensor([0])  # the target class index (set to 0 for simplicity)
+    target = torch.tensor([0]).to(device)  # the target class index (set to 0 for simplicity)
     loss = torch.nn.functional.cross_entropy(logits, target)
     loss.backward()
 
