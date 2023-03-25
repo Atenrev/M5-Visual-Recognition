@@ -38,10 +38,10 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
 
 
     predictor = DefaultPredictor(cfg)
-    model = predictor.model.backbone
+    model = predictor.model
 
     print(image.shape)
-    print(list(model(tensor_image.unsqueeze(0)).keys()))
+    print(list(model([image]).keys()))
 # i give up i went crazy
 
 if __name__ == '__main__': 
