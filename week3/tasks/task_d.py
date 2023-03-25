@@ -30,10 +30,10 @@ def fgsm_attack(image, epsilon, data_grad):
     # Return the perturbed image
     return perturbed_image
 
-def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10):
+def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsize = 1024):
 
     npimage = cv2.imread(attacked_image)
-    npimage = cv2.resize(npimage, (224, int(224 * npimage.shape[0]/npimage.shape[1]) ))
+    npimage = cv2.resize(npimage, (imsize, int(imsize * npimage.shape[0]/npimage.shape[1]) ))
     image = torch.from_numpy(npimage.transpose(2, 0, 1)).float().to(device) 
 
     cfg = get_cfg()
@@ -65,7 +65,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10):
 
 
     #### VISUALIZER ZONE #####
-    adversarial_image = data.cpu().detach().numpy()
+    adversarial_image = cv2.cvtColor(data.cpu().detach().numpy(), cv2.COLOR_RGB2BGR)
     adversarial_image = adversarial_image.transpose(1, 2, 0)
     outs = predictor(adversarial_image)
     viz = Visualizer(
