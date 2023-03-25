@@ -28,20 +28,19 @@ def run_adv():
 
     cfg = get_cfg()
     MODEL = MODELS['mask']
-    cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file(MODEL))
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(MODEL)
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
 
     predictor = DefaultPredictor(cfg)
-    attacker = DAGAttacker(cfg)
+    #attacker = DAGAttacker(cfg)
     print('hello')
 
 
-    for batch in attacker.data_loader:
-        x = batch[0]
-        print(x)
-        break
+    #for batch in attacker.data_loader:
+     #   x = batch[0]
+     #   print(x)
+     #   break
 
 
 
