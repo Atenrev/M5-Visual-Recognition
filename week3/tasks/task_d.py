@@ -41,8 +41,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     model = predictor.model
 
     print(image.shape)
-    print(list(model([{'image': image}])))
-# i give up i went crazy
+    output = model([{'image': tensor_image}])
 
 if __name__ == '__main__': 
     task_d()
