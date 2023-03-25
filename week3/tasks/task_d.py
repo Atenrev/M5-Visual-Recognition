@@ -50,8 +50,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
 
         print(data.min(), data.max())
         output = model([{'image': data}])
-        0/0 # ME QUIERO MATAR
-        
+        break        
 
 
 
