@@ -33,7 +33,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
 
     print(image.shape)
     print(model)
-    print(model([image]))
+    print(model(image.unsqueeze(0)).shape)
 # i give up i went crazy
 
 if __name__ == '__main__': 
