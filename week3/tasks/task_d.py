@@ -31,11 +31,17 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(MODEL)
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
 
+    # Normalize the input image
+    mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(3, 1, 1)
+    std = torch.tensor(cfg.MODEL.PIXEL_STD).view(3, 1, 1)
+    tensor_image = (image - mean) / std
+
+
     predictor = DefaultPredictor(cfg)
     model = predictor.model.backbone
 
     print(image.shape)
-    print(model(image.unsqueeze(0)))
+    print(model(tensor_image.unsqueeze(0)))
 # i give up i went crazy
 
 if __name__ == '__main__': 
