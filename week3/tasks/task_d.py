@@ -24,7 +24,7 @@ def task_d(*args):
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
 
     predictor = DefaultPredictor(cfg)
-    print(predictor)
+    print(predictor.model)
 # i give up i went crazy
 
 if __name__ == '__main__': 
