@@ -1,6 +1,6 @@
 from pathlib import Path
 from detectron2.config import get_cfg
-# from detectron2.adv import DAGAttacker
+from detectron2_1.adv import DAGAttacker
 from detectron2.structures import pairwise_iou, Boxes
 from detectron2 import model_zoo
 import torch
@@ -20,13 +20,24 @@ MODELS = {
     "faster": 'COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml',
 }
 
-image_path = None # Yes We are doing It That Way
+image_path =  '/home/adri/Desktop/master/M5/M5-Visual-Recognition/week3/data/mscoco/task_c/000000004036.jpg' # Yes We are doing It That Way
 
-def run_adv(cfg, args,):
+def run_adv(cfg, ):
 
     # credits: https://github.com/yizhe-ang/detectron2-1/blob/master/notebooks/adv.ipynb
 
-    # attacker = DAGAttacker(cfg) ########## COMMENTED UNTIL IT WORKS
+    cfg = get_cfg()
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
+    attacker = DAGAttacker(cfg)
+
+
+    for batch in attacker.data_loader:
+        x = batch[0]
+        print(x)
+        break
+
+
+
 
     # coco_instances_results, perturbed = attacker.run_DAG(vis=False)
     pass
