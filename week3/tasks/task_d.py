@@ -43,7 +43,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     epsilon = 0.01
     tensor_image.requires_grad = True
     output = model([{'image': tensor_image}])
-    logits = output['instances'].scores
+    logits = output[0]['instances'].scores
 
     target = torch.tensor([0])  # the target class index (set to 0 for simplicity)
     loss = torch.nn.functional.cross_entropy(logits, target)
