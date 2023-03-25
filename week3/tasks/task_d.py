@@ -41,7 +41,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     model = predictor.model
 
     print(image.shape)
-    print(list(model([{'image': image}]).keys()))
+    print(list(model([{'image': image}])))
 # i give up i went crazy
 
 if __name__ == '__main__': 
