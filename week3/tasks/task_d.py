@@ -45,7 +45,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     output = model([{'image': tensor_image}])
     logits = output[0]['instances'].scores
 
-    target = torch.zeros_like(logits).to(device)  # the target class index (set to 0 for simplicity)
+    target = torch.ones_like(logits).to(device)  # the target class index (set to 0 for simplicity)
     print(logits.shape, target.shape)
     loss = torch.nn.functional.cross_entropy(logits, target)
     loss.backward()
@@ -58,7 +58,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     adversarial_image = tensor_image + perturbation
 
     # Ensure that the adversarial image is within the valid range of values (0 to 1)
-    adversarial_image = torch.clip(adversarial_image, 0, 1).cpu().numpy()
+    adversarial_image = torch.clip(adversarial_image, 0, 1).detach().cpu().numpy()
 
     print(adversarial_image)
     # run inference
