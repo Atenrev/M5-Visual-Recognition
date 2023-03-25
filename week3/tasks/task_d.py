@@ -33,7 +33,6 @@ def fgsm_attack(image, epsilon, data_grad):
 def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsize = 1024):
 
     npimage = cv2.imread(attacked_image)
-    npimage = cv2.resize(npimage, (imsize, int(imsize * npimage.shape[0]/npimage.shape[1]) ))
     data = torch.from_numpy(npimage.transpose(2, 0, 1)).float().to(device) 
 
     cfg = get_cfg()
@@ -50,7 +49,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
     for step in range(steps):
 
         print(data.min(), data.max())
-        output = predictor([{'image': data}])
+        output = model([{'image': data}])
         0/0 # ME QUIERO MATAR
         
 
