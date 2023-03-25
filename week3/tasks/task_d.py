@@ -38,7 +38,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
 
 
     predictor = DefaultPredictor(cfg)
-    model = predictor
+    model = predictor.model
 
     print(image.shape)
     print(list(model(image).keys()))
