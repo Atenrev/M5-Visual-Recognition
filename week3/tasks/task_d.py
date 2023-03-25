@@ -22,7 +22,7 @@ device = 'cuda'
 
 def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
 
-    image = torch.from_numpy(cv2.imread(attacked_image).transpose(2, 0, 1)).to(device)
+    image = torch.from_numpy(cv2.imread(attacked_image).transpose(2, 0, 1)).float().to(device)
 
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file(MODEL))
