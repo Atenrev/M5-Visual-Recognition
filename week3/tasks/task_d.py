@@ -40,10 +40,25 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
     predictor = DefaultPredictor(cfg)
     model = predictor.model
 
-    print(image.shape)
+    epsilon = 0.01
+    tensor_image.requires_grad = True
     output = model([{'image': tensor_image}])
+    logits = output['instances'].scores
 
-    print(output)
+    target = torch.tensor([0])  # the target class index (set to 0 for simplicity)
+    loss = torch.nn.functional.cross_entropy(logits, target)
+    loss.backward()
+
+        # Use the sign of the gradients to generate the perturbation
+    perturbation = epsilon * torch.sign(tensor_image.grad)
+
+    # Add the perturbation to the original image to create the adversarial example
+    adversarial_image = image + perturbation.detach().numpy()
+
+    # Ensure that the adversarial image is within the valid range of values (0 to 1)
+    adversarial_image = np.clip(adversarial_image, 0, 1)
+
+    print(adversarial_image)
 
 if __name__ == '__main__': 
     task_d()
