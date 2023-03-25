@@ -31,7 +31,7 @@ def fgsm_attack(image, epsilon, data_grad):
     # Return the perturbed image
     return perturbed_image
 
-def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 40, imsize = 1024):
+def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 100, imsize = 1024):
 
     npimage = cv2.imread(attacked_image)
     data = torch.from_numpy(npimage.transpose(2, 0, 1)).float().to(device) 
