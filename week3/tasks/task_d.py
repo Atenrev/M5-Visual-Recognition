@@ -55,7 +55,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 500, imsi
 
         input_data = torch.clamp(data + perturbation * 127, 0, 255)
         output = model([{'image': input_data}])[0]
-        scores = output['instances'].scores
+        scores = output['instances'].scores[0]
         fake_scores = torch.zeros_like(scores)
         
         loss_value = loss(scores.unsqueeze(0), fake_scores.unsqueeze(0)) - (perturbation**2).mean()
