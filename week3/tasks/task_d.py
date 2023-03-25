@@ -62,7 +62,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg'):
 
     print(adversarial_image)
     # run inference
-    outs = predictor(adversarial_image)
+    outs = predictor(adversarial_image.transpose(1, 2, 0))
     viz = Visualizer(
         adversarial_image[:, :, ::-1],
         MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1.2
