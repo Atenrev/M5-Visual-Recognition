@@ -63,7 +63,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 5, imsize
         loss_value.backward()
         data_grad = data.grad
         perturbed_data = fgsm_attack(data, 10, data_grad)
-        data = perturbed_data
+        data = torch.from_numpy(perturbed_data.detach().cpu().numpy()).to(device)
                 
     #### VISUALIZER ZONE #####
     adversarial_image = data.cpu().detach().numpy()
