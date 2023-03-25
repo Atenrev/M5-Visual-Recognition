@@ -34,7 +34,7 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
 
     npimage = cv2.imread(attacked_image)
     npimage = cv2.resize(npimage, (imsize, int(imsize * npimage.shape[0]/npimage.shape[1]) ))
-    image = torch.from_numpy(npimage.transpose(2, 0, 1)).float().to(device) 
+    data = torch.from_numpy(npimage.transpose(2, 0, 1)).float().to(device) 
 
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file(MODEL))
@@ -42,9 +42,6 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
 
     # Normalize the input image
-    mean = torch.tensor(cfg.MODEL.PIXEL_MEAN).view(3, 1, 1).to(device)
-    std = torch.tensor(cfg.MODEL.PIXEL_STD).view(3, 1, 1).to(device)
-    data = (image - mean) / std
     data.requires_grad = True
     
 
@@ -53,8 +50,8 @@ def task_d(*args, attacked_image = './data/weird/el_bone.jpg', steps = 10, imsiz
     for step in range(steps):
 
         print(data.min(), data.max())
-        output = model([{'image': data}])
-        break # ME QUIERO MATAR
+        output = predictor([{'image': data}])
+        0/0 # ME QUIERO MATAR
         
 
 
