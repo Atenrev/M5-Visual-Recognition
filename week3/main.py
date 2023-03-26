@@ -29,7 +29,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--checkpoint", "-ch", type=str, default=None,
                         help="Model weights path")
     # Dataset settings
-    parser.add_argument("--load_dataset", "-tr", type=str, default=None,
+    parser.add_argument("--load_dataset", "-tr", type=str, default="coco_2017",
                         help="Load dataset")
     # Other
     parser.add_argument("--sequence", "-seq", type=str, default="0000",
