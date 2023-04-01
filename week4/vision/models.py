@@ -54,7 +54,8 @@ class VGG19(torch.nn.Module):
 
     def forward(self, batch):
 
-        h = self.model(batch)
+        h = torch.nn.functional.adaptive_max_pool2d(self.model(batch), (1, 1))
         if self.norm is not None: h =  torch.nn.functional.normalize(h, p = self.norm, dim = 1)
+
         return h
     
