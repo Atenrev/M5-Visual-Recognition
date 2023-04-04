@@ -26,7 +26,7 @@ V = np.random.random(2048)
 
 image, label = train.dataset[0]
 fullimage = (return_image_full_range(image))
-plt.imshow(fullimage.squeeze().cpu().numpy().astype(np.uint8).transpose(1, 2,  0))
+plt.imshow(fullimage)
 plt.show()
 
 exit()
