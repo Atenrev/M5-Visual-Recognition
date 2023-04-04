@@ -5,7 +5,7 @@ __pycache__/
 detectron2-1/
 # C extensions
 *.so
-
+*.ann
 # Distribution / packaging
 .Python
 env/
