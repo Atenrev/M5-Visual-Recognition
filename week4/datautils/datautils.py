@@ -88,3 +88,6 @@ def create_mit_dataloader(
         )
 
     return train_dataloader, val_dataloader, test_dataloader
+
+def return_image_full_range(image):
+    return torch.clamp(K.Normalize(mean=[-0.4850, -0.4560, -0.4060], std=[1/0.2290, 1/0.2240, 1/0.2250])(image), min = 0, max = 1) * 255
