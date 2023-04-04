@@ -2,6 +2,7 @@ import os
 import cv2
 import glob
 from PIL import Image
+import numpy as np
 
 import zipfile
 import torch
@@ -74,7 +75,8 @@ class MITSplitDataset(BaseDataset):
         image_path = self.image_paths[idx]
         sample_id = os.path.basename(image_path)
 
-        image = Image.open(image_path).convert("RGB")
+        image = np.array(Image.open(image_path).convert("RGB"))
+
         image = torch.tensor(image).float() / 255
 
         if self.transform:
