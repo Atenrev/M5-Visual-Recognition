@@ -19,12 +19,12 @@ class ProxyConfig:
         if self.state is None: raise StopIteration
         return 0
 
+device = 'cuda'
 train, test, val = create_mit_dataloader(1, '../datasets/MIT_split/', 'cuda', ProxyConfig(), inference = False)
 
-loader = DataLoader(val.dataset, batch_size = 1) 
 V = np.random.random(2048)
 
-model = Resnet(resnet = '101')
-annoy = Annoyer(model, loader, emb_size = 2048) # Works better with smaller emb_sizes però que li farem
+model = Resnet(resnet = '101').to(device)
+annoy = Annoyer(model, val, emb_size = 2048, device = device) # Works better with smaller emb_sizes però que li farem
 annoy.fit()
 print(annoy.retrieve_by_vector(V))

@@ -9,7 +9,7 @@ class Annoyer:
     # High performance approaximate nearest neighbors - agnostic wrapper
     # Find implementation and documentation on https://github.com/spotify/annoy
 
-    def __init__(self, model, dataset, emb_size = None, distance = 'angular', local = 'trees.ann') -> None:
+    def __init__(self, model, dataset, emb_size = None, distance = 'angular', local = 'trees.ann', device = 'cuda') -> None:
         assert not (emb_size is None) and isinstance(emb_size, int),\
             f'When using Annoyer KNN emb_size must be an int. Set as None for common interface. Found: {type(emb_size)}' 
 
@@ -18,6 +18,7 @@ class Annoyer:
         # FIXME: Dataloader assumes 1 - Batch Size
         self.dataloader = dataset
         self.path = local
+        self.device = device
 
         self.trees = annoy.AnnoyIndex(emb_size, distance)
         self.state_variables = {
@@ -31,7 +32,7 @@ class Annoyer:
         for idx, (image, _) in enumerate(self.dataloader):
             print(f'Building KNN... {idx} / {len(self.dataloader)}\t', end = '\r')
             with torch.no_grad():
-                emb = self.model(image.float()).squeeze().cpu().numpy() # Ensure batch_size = 1
+                emb = self.model(image.float().to(self.device)).squeeze().cpu().numpy() # Ensure batch_size = 1
 
             self.trees.add_item(idx, emb)
     
@@ -55,10 +56,11 @@ class Annoyer:
 class SKNNWrapper:
 
     # Common interface for the annoyer KNN 
-    def __init__(self, model, dataset, distance = 'cosine', k = 5, **kwargs) -> None:
+    def __init__(self, model, dataset, distance = 'cosine', k = 5, device = 'cuda', **kwargs) -> None:
         self.model = model
 
         # FIXME: Dataloader assumes 1 - Batch Size
+        self.device = device
         self.dataloader = dataset
         self.trees = NearestNeighbors(n_neighbors = k, metric = distance)
         self.state_variables = {
@@ -74,7 +76,7 @@ class SKNNWrapper:
         for idx, (image, _) in enumerate(self.dataloader):
             print(f'Building KNN... {idx} / {len(self.dataloader)}\t', end = '\r')
             with torch.no_grad():
-                emb = self.model(image.float()).squeeze().cpu().numpy() # Ensure batch_size = 1
+                emb = self.model(image.float().to(self.device)).squeeze().cpu().numpy() # Ensure batch_size = 1
 
             X.append(emb)
         self.trees.fit(X)

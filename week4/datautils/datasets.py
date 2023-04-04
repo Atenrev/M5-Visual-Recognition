@@ -75,7 +75,7 @@ class MITSplitDataset(BaseDataset):
         image_path = self.image_paths[idx]
         sample_id = os.path.basename(image_path)
 
-        image = np.array(Image.open(image_path).convert("RGB"))
+        image = np.array(Image.open(image_path).convert("RGB")).transpose(2, 0, 1)
 
         image = torch.tensor(image).float() / 255
 
