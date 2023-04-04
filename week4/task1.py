@@ -19,7 +19,7 @@ class ProxyConfig:
         if self.state is None: raise StopIteration
         return 0
 
-train, test, val = create_mit_dataloader(1, '../datasets/MIT_split/', 'cpu', ProxyConfig(), inference = False)
+train, test, val = create_mit_dataloader(1, '../datasets/MIT_split/', 'cuda', ProxyConfig(), inference = False)
 print(train, test, val) # TODO: Why no test :(
 
 V = np.random.random(2048)
