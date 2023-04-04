@@ -1,14 +1,16 @@
-from vision.models import Resnet, VGG19
-from knn.annoyers import Annoyer, SKNNWrapper
-from datautils.datasets import ZippedDataloader
+from src.models.resnet import ResNet
+from src.models.vgg import VGG19
+from src.methods.annoyers import Annoyer, SKNNWrapper
+from src.datasets.zipped import ZippedDataloader
 
 from torch.utils.data import DataLoader
 import numpy as np
-# Shit file for unitary testing
 
+
+# Shit file for unitary testing
 V = np.random.random(2048)
 
-model = Resnet(resnet = '101')
+model = ResNet(resnet = '101')
 dataset = ZippedDataloader('/home/adri/Pictures/zipper.zip')
 dataloader = DataLoader(dataset, batch_size = 1)
 

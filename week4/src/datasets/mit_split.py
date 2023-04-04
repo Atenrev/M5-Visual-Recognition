@@ -1,26 +1,50 @@
-
 import os
-import cv2
 import glob
+import numpy as np
+import torch
+import kornia.augmentation as K
+
 from PIL import Image
 
-import zipfile
-import torch
-
-from typing import *
-from torch.utils.data import Dataset
-import kornia.augmentation as K
-from torch.utils.data import DataLoader
-
-from datautils.datasets import MITSplitDataset
-import numpy as np
+from typing import List, Any, Optional
+from torch.utils.data import Dataset, DataLoader
 
 
+class MITSplitDataset(Dataset):
+
+    def __init__(self,
+                 classes_paths: List[str],
+                 transform: Optional[Any] = None,
+                 ):
+        self.transform = transform
+        self.classes_paths = classes_paths
+        self.image_paths = []
+        self.targets = []
+        self.labels = []
+
+        for i, class_path in enumerate(classes_paths):
+            for image_path in glob.glob(os.path.join(class_path, "*.jpg")):
+                self.image_paths.append(image_path)
+                self.targets.append(i)
+                self.labels.append(os.path.basename(class_path))
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, idx: int):
+        image_path = self.image_paths[idx]
+        image = np.array(Image.open(image_path).convert("RGB")).transpose(2, 0, 1)
+        image = torch.tensor(image).float() / 255
+
+        if self.transform:
+            image = self.transform(image).squeeze()
+
+        return image, self.labels[idx]
+    
 
 def create_mit_dataloader(
     batch_size: int,
     dataset_path: str,
-    device: torch.device,
     config: Any,
     inference: bool = False,
     dataset_kwargs: dict = {},
@@ -63,8 +87,8 @@ def create_mit_dataloader(
         data_keys=["input"]
     )
 
-    train_dataset = MITSplitDataset(train_dirs, device, config, **train_dataset_kwargs)
-    test_dataset = MITSplitDataset(test_dirs, device, config, **val_dataset_kwargs)
+    train_dataset = MITSplitDataset(train_dirs, **train_dataset_kwargs)
+    test_dataset = MITSplitDataset(test_dirs, **val_dataset_kwargs)
 
     if not inference:
         train_dataloader = DataLoader(
@@ -89,6 +113,3 @@ def create_mit_dataloader(
         )
 
     return train_dataloader, val_dataloader, test_dataloader
-
-def return_image_full_range(image):
-    return (torch.clamp(K.Normalize(mean=[-0.4850, -0.4560, -0.4060], std=[1/0.2290, 1/0.2240, 1/0.2250])(image), min = 0, max = 1) * 255).squeeze().cpu().numpy().astype(np.uint8).transpose(1, 2,  0)

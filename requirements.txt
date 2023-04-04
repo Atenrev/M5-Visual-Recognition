@@ -111,3 +111,5 @@ wandb==0.13.11
 Werkzeug==2.2.3
 wrapt==1.14.1
 yacs==0.1.8
+annoy
+pytorch-metric-learning

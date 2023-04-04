@@ -1,9 +1,10 @@
 import annoy
 import torch
-from sklearn.neighbors import NearestNeighbors
 import warnings
 
+from sklearn.neighbors import NearestNeighbors
 from tqdm import tqdm
+
 
 class Annoyer:
     # High performance approaximate nearest neighbors - agnostic wrapper
@@ -31,6 +32,7 @@ class Annoyer:
 
         for idx, (image, _) in enumerate(self.dataloader):
             print(f'Building KNN... {idx} / {len(self.dataloader)}\t', end = '\r')
+            
             with torch.no_grad():
                 emb = self.model(image.float().to(self.device)).squeeze().cpu().numpy() # Ensure batch_size = 1
 

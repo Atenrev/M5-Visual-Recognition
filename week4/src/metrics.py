@@ -47,5 +47,3 @@ def plot_retrieved_images(query, retrieved, true_positives = None, green_p = .05
 
     stacked = np.hstack(final_image)
     cv2.imwrite(out, cv2.cvtColor(stacked, cv2.COLOR_RGB2BGR))
-
-    return 1
