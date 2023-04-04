@@ -20,20 +20,32 @@ def calculate_top_k_accuracy(prediction, target, k = 5):
 def plot_retrieved_images(query, retrieved, true_positives = None, green_p = .05, shape = 512, out = 'tmp.png'):
     # TP: [1, 0, 0, 1 ...] so we can grayscale FP
     query = cv2.resize(query, (shape, shape))
-    until = shape * green_p
-    query[:until, :until] = np.array([0, 255, 0])
-    query[shape - until:, shape - until:] = np.array([0, 255, 0])
+    until = int(shape * green_p)
+    query[:until, :] = np.array([0, 0, 255])
+    query[shape - until:, :] = np.array([0, 0, 255])
+
+    query[:, :until] = np.array([0, 0, 255])
+    query[:, shape - until:] = np.array([0, 0, 255])
     
     final_image = [query]
+
     for n, image in enumerate(retrieved):
         resized = cv2.resize(image, (shape, shape))
         if not (true_positives is None):
 
-            if not true_positives[n]: resized = cv2.cvtColor(cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR)
+            color = np.array([255, 0, 0]) if not true_positives[n] else np.array([0, 255, 0])
+            if not true_positives[n]: resized = cv2.cvtColor(cv2.cvtColor(resized, cv2.COLOR_RGB2GRAY), cv2.COLOR_GRAY2BGR)
+
+            resized[:until, :] = color
+            resized[shape - until:, :] = color
+
+            resized[:, :until] = color
+            resized[:, shape - until:] = color
         
         final_image.append(resized)
-    
+
+
     stacked = np.hstack(final_image)
-    cv2.imwrite(out, stacked)
+    cv2.imwrite(out, cv2.cvtColor(stacked, cv2.COLOR_RGB2BGR))
 
     return 1

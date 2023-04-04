@@ -70,7 +70,7 @@ def create_mit_dataloader(
         train_dataloader = DataLoader(
             dataset=train_dataset,
             batch_size=batch_size,
-            shuffle=True,
+            shuffle=False,
             num_workers=0,
         )
         val_dataloader = test_dataloader = DataLoader(
