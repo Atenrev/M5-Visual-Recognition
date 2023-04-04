@@ -20,11 +20,11 @@ class ProxyConfig:
         return 0
 
 train, test, val = create_mit_dataloader(1, '../datasets/MIT_split/', 'cuda', ProxyConfig(), inference = False)
-print(train, test, val) # TODO: Why no test :(
 
+loader = DataLoader(val.dataset, batch_size = 1) 
 V = np.random.random(2048)
 
 model = Resnet(resnet = '101')
-annoy = Annoyer(model, train, emb_size = 2048) # Works better with smaller emb_sizes però que li farem
+annoy = Annoyer(model, loader, emb_size = 2048) # Works better with smaller emb_sizes però que li farem
 annoy.fit()
 print(annoy.retrieve_by_vector(V))
