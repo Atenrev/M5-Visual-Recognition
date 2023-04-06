@@ -14,8 +14,8 @@ def calculate_recall(prediction, gt):
 def calculate_precision(prediction, gt): 
     return precision_score(prediction, gt)
 
-def calculate_top_k_accuracy(prediction, target, k = 5):
-    return top_k_accuracy_score(prediction, target, k = k)
+def calculate_top_k_accuracy(prediction, k = 5):
+    return sum(prediction[:k]) > 0 
 
 def plot_retrieved_images(query, retrieved, true_positives = None, green_p = .05, shape = 512, out = 'tmp.png'):
     # TP: [1, 0, 0, 1 ...] so we can grayscale FP

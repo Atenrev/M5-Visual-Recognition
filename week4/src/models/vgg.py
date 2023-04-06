@@ -5,10 +5,14 @@ import torchvision
 
 
 class VGG19(torch.nn.Module):
-    def __init__(self, norm=2, batchnorm=True, pretrained='imagenet'):
+    def __init__(self, norm=None, batchnorm=True, pretrained='imagenet'):
         super(VGG19, self).__init__()
+        if pretrained and batchnorm: pretrained = torchvision.models.VGG19_BN_Weights.IMAGENET1K_V1
+        elif pretrained: pretrained = torchvision.models.VGG19_Weights.IMAGENET1K_V1
+        else: pretrained = None
+
         model = torchvision.models.vgg19(
-            pretrained=pretrained) if not batchnorm else torchvision.models.vgg19_bn(pretrained=pretrained)
+            weights=pretrained) if not batchnorm else torchvision.models.vgg19_bn(weights=pretrained)
         self.model = torch.nn.Sequential(*(list(model.children())[:-1]))
         self.norm = norm
 

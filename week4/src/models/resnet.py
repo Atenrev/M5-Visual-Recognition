@@ -5,19 +5,21 @@ import torchvision
 
 
 class ResNet(torch.nn.Module):
-    def __init__(self, norm=2, resnet='152', pretrained='imagenet'):
+    def __init__(self, norm=None, resnet='152', pretrained=True):
         super(ResNet, self).__init__()
 
+        if pretrained: pretrained = eval(f"torchvision.models.ResNet{resnet}_Weights.IMAGENET1K_V1")
         if resnet == '152':
-            self.resnet = torchvision.models.resnet152(pretrained=pretrained)
+            
+            self.resnet = torchvision.models.resnet152(weights=pretrained)
         elif resnet == '101':
-            self.resnet = torchvision.models.resnet101(pretrained=pretrained)
+            self.resnet = torchvision.models.resnet101(weights=pretrained)
         elif resnet == '50':
-            self.resnet = torchvision.models.resnet50(pretrained=pretrained)
+            self.resnet = torchvision.models.resnet50(weights=pretrained)
         elif resnet == '34':
-            self.resnet = torchvision.models.resnet34(pretrained=pretrained)
+            self.resnet = torchvision.models.resnet34(weights=pretrained)
         elif resnet == '18':
-            self.resnet = torchvision.models.resnet18(pretrained=pretrained)
+            self.resnet = torchvision.models.resnet18(weights=pretrained)
         else:
             raise NotImplementedError
 
