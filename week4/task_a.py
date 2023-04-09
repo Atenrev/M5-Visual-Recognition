@@ -6,6 +6,8 @@ from src.models.resnet import ResNet
 from src.models.vgg import VGG19
 
 from tqdm import tqdm
+
+
 class ProxyConfig:
     input_resize = 512
 
@@ -24,7 +26,7 @@ class ProxyConfig:
 
 def main(k = 50):
     device = 'cuda'
-    train, val, test = create_mit_dataloader(
+    train, test = create_mit_dataloader(
         1, '../datasets/MIT_split/', ProxyConfig(), inference=False)
 
     model = ResNet(resnet='101').to(device)
@@ -70,8 +72,6 @@ def main(k = 50):
         f"\n\ttop_5 - precision: {np.mean(top_5_acc)}",\
         f"\n\ttop_10 - precision: {np.mean(top_10_acc)}"
     )
-
-
 
 
 if __name__ == "__main__":

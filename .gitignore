@@ -110,6 +110,7 @@ pretrained_weights/
 /runs/
 /plots/
 /wandb/
+/outputs/
 environment.yml
 experiments.json
 eval_report.txt

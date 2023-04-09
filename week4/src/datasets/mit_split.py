@@ -39,7 +39,7 @@ class MITSplitDataset(Dataset):
         if self.transform:
             image = self.transform(image).squeeze()
 
-        return image, self.labels[idx]
+        return image, self.targets[idx]
     
 
 def create_mit_dataloader(
@@ -97,19 +97,20 @@ def create_mit_dataloader(
             shuffle=False,
             num_workers=0,
         )
-        val_dataloader = test_dataloader = DataLoader(
+        test_dataloader = DataLoader(
             dataset=test_dataset,
             batch_size=batch_size,
             shuffle=False,
             num_workers=0,
         )
     else:
-        val_dataloader = test_dataloader = None
+        train_dataset = test_dataset
+        test_dataloader = test_dataset = None
         train_dataloader = DataLoader(
-            dataset=test_dataset,
+            dataset=train_dataset,
             batch_size=batch_size,
             shuffle=False,
             num_workers=0,
         )
 
-    return train_dataloader, val_dataloader, test_dataloader
+    return train_dataloader, test_dataloader
