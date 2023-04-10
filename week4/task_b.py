@@ -85,7 +85,7 @@ def __parse_args() -> argparse.Namespace:
 
 def visualizer_hook(umapper, umap_embeddings, labels, split_name, keyname, epoch, *args):
     global OUTPUT_PATH, EXPERIMENT_NAME
-    output_dir = os.path.join(OUTPUT_PATH, "umap_plots")
+    output_dir = os.path.join(OUTPUT_PATH, "umap_plots", EXPERIMENT_NAME)
     os.makedirs(output_dir, exist_ok=True)
     logging.info(
         "UMAP plot for the {} split and label set {}".format(
@@ -105,7 +105,7 @@ def visualizer_hook(umapper, umap_embeddings, labels, split_name, keyname, epoch
         plt.plot(umap_embeddings[idx, 0],
                  umap_embeddings[idx, 1], ".", markersize=1)
     plt.show()
-    fig.savefig(os.path.join(output_dir, f"umap_{split_name}_{epoch}_{EXPERIMENT_NAME}.png"))
+    fig.savefig(os.path.join(output_dir, f"umap_{split_name}_{epoch}.png"))
 
 
 def main(args: argparse.Namespace):
@@ -114,7 +114,7 @@ def main(args: argparse.Namespace):
     OUTPUT_PATH = args.output_path
     experiment_name = f"{args.model}_{args.dataset}_loss_{args.loss}_distance_{args.distance}_posmargin_{args.pos_margin}_negmargin_{args.neg_margin}"
     EXPERIMENT_NAME = experiment_name
-    model_folder = os.path.join(args.output_path, "models")
+    model_folder = os.path.join(args.output_path, "models", experiment_name)
     os.makedirs(model_folder, exist_ok=True)
     logs_folder = os.path.join(args.output_path, "logs", experiment_name)
     os.makedirs(logs_folder, exist_ok=True)
@@ -253,7 +253,7 @@ def main(args: argparse.Namespace):
     # Save model
     os.makedirs('./models', exist_ok=True)
     torch.save(model.state_dict(), os.path.join(
-        model_folder, f'{experiment_name}.pth'))
+        model_folder, f'model_final.pth'))
 
 
 if __name__ == "__main__":
