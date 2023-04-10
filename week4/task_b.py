@@ -72,11 +72,11 @@ def __parse_args() -> argparse.Namespace:
                         help='Optimizer to use. Options: adam, sgd.')
     parser.add_argument('--epochs', type=int, default=10,
                         help='Number of epochs.')
-    parser.add_argument('--batch_size', type=int, default=8,
+    parser.add_argument('--batch_size', type=int, default=16,
                         help='Batch size.')
-    parser.add_argument('--lr_trunk', type=float, default=3e-4,
+    parser.add_argument('--lr_trunk', type=float, default=1e-5,
                         help='Learning rate for the trunk.')
-    parser.add_argument('--lr_embedder', type=float, default=3e-3,
+    parser.add_argument('--lr_embedder', type=float, default=1e-4,
                         help='Learning rate for the embedder.')
 
     args = parser.parse_args()
