@@ -50,7 +50,7 @@ def __parse_args() -> argparse.Namespace:
                         help='Positive margin for contrastive loss. Also used for triplet loss.')
     parser.add_argument('--neg_margin', type=float, default=1.0,
                         help='Negative margin for contrastive loss.')
-    parser.add_argument('--distance', type=str, default='euclidean',
+    parser.add_argument('--distance', type=str, default='cosine',
                         help='Distance to use. Options: euclidean, cosine.')
     # Miner configuration
     parser.add_argument('--miner', type=str, default="PairMargin",
@@ -83,29 +83,38 @@ def __parse_args() -> argparse.Namespace:
     return args
 
 
-def visualizer_hook(umapper, umap_embeddings, labels, split_name, keyname, epoch, *args):
+class ProxyVisualizer:
+    def fit_transform(self, embeddings):
+        return embeddings
+
+
+def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, *args):
     global OUTPUT_PATH, EXPERIMENT_NAME
-    output_dir = os.path.join(OUTPUT_PATH, "umap_plots", EXPERIMENT_NAME)
+    # output_dir = os.path.join(OUTPUT_PATH, "umap_plots", EXPERIMENT_NAME)
+    output_dir = os.path.join(OUTPUT_PATH, "embeddings", EXPERIMENT_NAME)
     os.makedirs(output_dir, exist_ok=True)
-    logging.info(
-        "UMAP plot for the {} split and label set {}".format(
-            split_name, keyname)
-    )
-    label_set = np.unique(labels)
-    num_classes = len(label_set)
-    fig = plt.figure(figsize=(20, 15))
-    plt.gca().set_prop_cycle(
-        cycler(
-            "color", [plt.cm.nipy_spectral(i)
-                      for i in np.linspace(0, 0.9, num_classes)]
-        )
-    )
-    for i in range(num_classes):
-        idx = labels == label_set[i]
-        plt.plot(umap_embeddings[idx, 0],
-                 umap_embeddings[idx, 1], ".", markersize=1)
-    plt.show()
-    fig.savefig(os.path.join(output_dir, f"umap_{split_name}_{epoch}.png"))
+    # Save embeddings
+    np.save(os.path.join(output_dir, f"embeddings_{split_name}_{epoch}.npy"), embeddings)
+    
+    # logging.info(
+    #     "UMAP plot for the {} split and label set {}".format(
+    #         split_name, keyname)
+    # )
+    # label_set = np.unique(labels)
+    # num_classes = len(label_set)
+    # fig = plt.figure(figsize=(20, 15))
+    # plt.gca().set_prop_cycle(
+    #     cycler(
+    #         "color", [plt.cm.nipy_spectral(i)
+    #                   for i in np.linspace(0, 0.9, num_classes)]
+    #     )
+    # )
+    # for i in range(num_classes):
+    #     idx = labels == label_set[i]
+    #     plt.plot(embeddings[idx, 0],
+    #              embeddings[idx, 1], ".", markersize=1)
+    # plt.show()
+    # fig.savefig(os.path.join(output_dir, f"umap_{split_name}_{epoch}.png"))
 
 
 def main(args: argparse.Namespace):
@@ -220,7 +229,8 @@ def main(args: argparse.Namespace):
     # Create the tester
     tester = testers.GlobalEmbeddingSpaceTester(
         end_of_testing_hook=hooks.end_of_testing_hook,
-        visualizer=umap.UMAP(),
+        # visualizer=umap.UMAP(),
+        visualizer=ProxyVisualizer(),
         visualizer_hook=visualizer_hook,
         dataloader_num_workers=1,
         accuracy_calculator=AccuracyCalculator(k="max_bin_count"),
