@@ -1,4 +1,0 @@
-classname: "BaseClassifier"
-
-metrics:
-- accuracy

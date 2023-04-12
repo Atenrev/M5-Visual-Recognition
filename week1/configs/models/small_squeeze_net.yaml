@@ -1,6 +1,0 @@
-classname: "SmallSqueezeNetCNN"
-
-num_classes: 8
-
-metrics:
-- accuracy
