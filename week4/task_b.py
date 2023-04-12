@@ -44,15 +44,21 @@ def __parse_args() -> argparse.Namespace:
     parser.add_argument('--embedding_size', type=int, default=256,
                         help='Size of the embedding vector.')
     # Loss configuration
-    parser.add_argument('--loss', type=str, default='contrastive',
-                        help='Loss to use. Options: contrastive, triplet.')
-    parser.add_argument('--pos_margin', type=float, default=0.0,
+    parser.add_argument('--loss', type=str, default='ntxent',
+                        help='Loss to use. Options: contrastive, ntxent, triplet.')
+    parser.add_argument('--pos_margin', type=float, default=1.0,
                         help='Positive margin for contrastive loss. Also used for triplet loss.')
-    parser.add_argument('--neg_margin', type=float, default=1.0,
+    parser.add_argument('--neg_margin', type=float, default=0.0,
                         help='Negative margin for contrastive loss.')
-    parser.add_argument('--distance', type=str, default='cosine',
+    parser.add_argument('--triplet_margin', type=float, default=0.05,
+                        help='Margin for triplet loss.')
+    parser.add_argument('--temperature', type=float, default=0.5,
+                        help='Temperature for contrastive loss.')
+    parser.add_argument('--distance', type=str, default='cosine', # euclidean is default for triplet
                         help='Distance to use. Options: euclidean, cosine.')
     # Miner configuration
+    # For contrastive loss, use PairMargin or BatchEasyHard
+    # For triplet loss, use TripletMargin, MultiSimilarity or BatchHard
     parser.add_argument('--miner', type=str, default="PairMargin",
                         help='Miner to use. Options: BatchEasyHard, BatchHard, MultiSimilarity, PairMargin, TripletMargin.')
     parser.add_argument('--miner_pos_strategy', type=str, default='easy',
@@ -93,9 +99,10 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
     # output_dir = os.path.join(OUTPUT_PATH, "umap_plots", EXPERIMENT_NAME)
     output_dir = os.path.join(OUTPUT_PATH, "embeddings", EXPERIMENT_NAME)
     os.makedirs(output_dir, exist_ok=True)
-    # Save embeddings
+    # Save embeddings with labels
     np.save(os.path.join(output_dir, f"embeddings_{split_name}_{epoch}.npy"), embeddings)
-    
+    np.save(os.path.join(output_dir, f"labels_{split_name}_{epoch}.npy"), labels)
+
     # logging.info(
     #     "UMAP plot for the {} split and label set {}".format(
     #         split_name, keyname)
@@ -156,6 +163,8 @@ def main(args: argparse.Namespace):
     else:
         raise ValueError(f'Unknown dataset: {args.dataset}')
 
+    # Sampler
+    # https://kevinmusgrave.github.io/pytorch-metric-learning/samplers/
     class_sampler = samplers.MPerClassSampler(
         labels=train_ds.targets,
         m=args.batch_size // 8,
@@ -164,6 +173,7 @@ def main(args: argparse.Namespace):
     )
 
     # Loss configuration
+    # https://kevinmusgrave.github.io/pytorch-metric-learning/losses/
     if args.distance == 'euclidean':
         distance = distances.LpDistance(p=2)
     elif args.distance == 'cosine':
@@ -177,15 +187,21 @@ def main(args: argparse.Namespace):
             neg_margin=args.neg_margin,
             distance=distance
         )
+    elif args.loss == 'ntxent':
+        criterion = losses.NTXentLoss(
+            temperature=args.temperature,
+            distance=distance,
+        )
     elif args.loss == 'triplet':
         criterion = losses.TripletMarginLoss(
-            margin=args.pos_margin,
+            margin=args.triplet_margin,
             distance=distance,
         )
     else:
         raise ValueError(f'Unknown loss: {args.loss}')
 
     # Miner configuration
+    # https://kevinmusgrave.github.io/pytorch-metric-learning/miners/
     if args.miner == "BatchEasyHard":
         miner = miners.BatchEasyHardMiner(
             pos_strategy=args.miner_pos_strategy,
@@ -227,6 +243,7 @@ def main(args: argparse.Namespace):
     hooks = logging_presets.get_hook_container(record_keeper)
 
     # Create the tester
+    # https://kevinmusgrave.github.io/pytorch-metric-learning/testers/
     tester = testers.GlobalEmbeddingSpaceTester(
         end_of_testing_hook=hooks.end_of_testing_hook,
         # visualizer=umap.UMAP(),
@@ -245,6 +262,7 @@ def main(args: argparse.Namespace):
     )
 
     # Training
+    # https://kevinmusgrave.github.io/pytorch-metric-learning/trainers/
     trainer = trainers.MetricLossOnly(
         models={"trunk": model.trunk, "embedder": model.embedder},
         optimizers={"trunk_optimizer": trunk_optimizer,
