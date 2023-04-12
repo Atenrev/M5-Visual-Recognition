@@ -223,6 +223,8 @@ def main(args: argparse.Namespace):
             margin=args.miner_pos_margin,
             type_of_triplets=args.miner_type_of_triplets,
         )
+    else:
+        miner = None
 
     # Optimizer configuration
     if args.optimizer == 'adam':
@@ -268,7 +270,7 @@ def main(args: argparse.Namespace):
         optimizers={"trunk_optimizer": trunk_optimizer,
                     "embedder_optimizer": embedder_optimizer},
         loss_funcs={"metric_loss": criterion},
-        mining_funcs={"tuple_miner": miner},
+        mining_funcs={"tuple_miner": miner} if miner else None,
         data_device=device,
         dataset=train_ds,
         batch_size=args.batch_size,
