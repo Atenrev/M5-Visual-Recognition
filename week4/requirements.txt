@@ -37,3 +37,5 @@ urllib3==1.26.15
 annoy
 pytorch-metric-learning[with-hooks]
 umap-learn
+kornia
+munch

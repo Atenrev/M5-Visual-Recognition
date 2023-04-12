@@ -128,7 +128,7 @@ def main(args: argparse.Namespace):
     global OUTPUT_PATH, EXPERIMENT_NAME
     os.makedirs(args.output_path, exist_ok=True)
     OUTPUT_PATH = args.output_path
-    experiment_name = f"{args.model}_{args.dataset}_loss_{args.loss}_distance_{args.distance}_posmargin_{args.pos_margin}_negmargin_{args.neg_margin}"
+    experiment_name = f"{args.model}_{args.dataset}_loss_{args.loss}_miner_{args.miner}_distance_{args.distance}"
     EXPERIMENT_NAME = experiment_name
     model_folder = os.path.join(args.output_path, "models", experiment_name)
     os.makedirs(model_folder, exist_ok=True)
