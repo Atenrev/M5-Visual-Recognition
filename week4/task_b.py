@@ -164,9 +164,7 @@ def generate_sprite_image(val_ds):
     # Gather PIL images for sprite
     images_pil = []
     for img_pt, _ in val_ds:
-        print("shape img_pt: ", img_pt.shape)
         img_np = img_pt.numpy().transpose(1, 2, 0) * 255
-        print("shape img_np: ", img_np.shape)
         # Save PIL image for sprite
         img_pil = Image.fromarray(img_np.astype('uint8'), 'RGB').resize((100, 100))
         images_pil.append(img_pil)
@@ -186,7 +184,7 @@ def generate_sprite_image(val_ds):
         spriteimage.paste(image, (w_loc, h_loc))
 
     global tensorboard_folder
-    spriteimage.convert('RGB').save(f'{tensorboard_folder}/embeddings/sprite.jpg', transparency=0)
+    spriteimage.convert('RGB').save(f'{tensorboard_folder}/sprite.jpg', transparency=0)
 
     val_ds.transform = old_transform
 
@@ -202,12 +200,24 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
         if embed_type == 'embed':
             # store embeddings for tensorboard's projector
             os.makedirs(os.path.join(tensorboard_folder, 'embeddings'), exist_ok=True)
-            with open(f'{tensorboard_folder}/embeddings/feature_vecs.tsv', 'w') as fw:
+            with open(f'{tensorboard_folder}/feature_vecs.tsv', 'w') as fw:
                 csv_writer = csv.writer(fw, delimiter='\t')
                 csv_writer.writerows(embed)
-            with open(f'{tensorboard_folder}/embeddings/metadata.tsv', 'w') as file:
+            with open(f'{tensorboard_folder}/metadata.tsv', 'w') as file:
                 for label in labels:
                     file.write(f'{label}\n')
+
+            x = """embeddings {
+  tensor_path: "feature_vecs.tsv"
+  sprite {
+    image_path: "sprite.jpg"
+    single_image_dim: 100
+    single_image_dim: 100
+  }
+}"""
+            with open(f"{tensorboard_folder}/projector_config.pbtxt","w") as f:
+                f.writelines(x)
+
             continue
 
         # plot embeddings
