@@ -137,7 +137,7 @@ def create_GIF(plots_dir: str, max_epoch: int):
             epoch = os.path.basename(filename).split("_")[-1].split(".")[0]
             cv2.putText(
                 frame, f"{epoch}/{max_epoch}",
-                (0.5, 0.5),  # bottom left
+                (1, 1),  # bottom left
                 cv2.FONT_HERSHEY_SIMPLEX,  # font
                 1,  # scale
                 (255,0,0),  # color
