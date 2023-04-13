@@ -124,7 +124,7 @@ def create_GIF(plots_dir: str, max_epoch: int):
     natsort_key = natsort_keygen(key=lambda y: y.lower())
 
     for embed_type in ['pca', 'tsne', 'umap']:
-        embed_plot_files = glob.glob(plots_dir, f"{embed_type}*.png").sort(key=natsort_key)
+        embed_plot_files = glob.glob(os.path.join(plots_dir, f"{embed_type}*.png")).sort(key=natsort_key)
         print("embed_plot_files ", embed_plot_files)
 
         plot_images = []
