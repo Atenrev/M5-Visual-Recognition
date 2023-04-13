@@ -43,7 +43,7 @@ def __parse_args() -> argparse.Namespace:
     # Dataset configuration
     parser.add_argument('--dataset', type=str, default='mit_split',
                         help='Dataset to use. Options: mit_split, coco.')
-    parser.add_argument('--dataset_config_path', type=str, default='./week4/configs/mit_split.yaml',
+    parser.add_argument('--dataset_config_path', type=str, default='./configs/mit_split.yaml',
                         help='Path to the dataset config file.')
     parser.add_argument('--dataset_path', type=str, default='./datasets/MIT_split',
                         help='Path to the dataset.')
