@@ -3,6 +3,7 @@ import os
 from torch.utils.data import DataLoader
 import kornia.augmentation as K
 from torchvision.datasets import CocoDetection
+from torchvision.transforms import ToTensor
 
 from typing import Any
 
@@ -51,10 +52,12 @@ def create_coco_dataloader(
     train_dataset = CocoDetection(
         root=os.path.join(dataset_path, "train2014"),
         annFile=os.path.join(dataset_path, "instances_train2014.json"),
+        transform=ToTensor(),
     )
     test_dataset = CocoDetection(
         root=os.path.join(dataset_path, "val2014"),
         annFile=os.path.join(dataset_path, "instances_val2014.json"),
+        transform=ToTensor(),
     )
 
     if not inference:
