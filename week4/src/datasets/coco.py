@@ -16,7 +16,7 @@ def create_coco_dataloader(
     dataset_kwargs: dict = {},
 ):
 
-    transforms = [K.Resize(config.input_resize), K.Normalize(mean=[0.4850, 0.4560, 0.4060], std=[0.2290, 0.2240,
+    transforms = [K.Resize((config.input_resize,config.input_resize)), K.Normalize(mean=[0.4850, 0.4560, 0.4060], std=[0.2290, 0.2240,
                                                                                                  0.2250]), ]
     # transforms = []
     train_transforms = list(transforms)

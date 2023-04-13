@@ -113,9 +113,6 @@ def run_model_on_images(cfg, input_dir):
     instances_train = json.load(open("/Users/Alex/MacBook Pro/MSc in CV/M5 - Visual Recognition/M5-Visual-Recognition/datasets/COCO/instances_train2014.json"))
 
 
-
-
-
 def get_base_cfg(args):
     cfg = get_cfg()
 
