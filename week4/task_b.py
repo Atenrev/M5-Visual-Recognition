@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pytorch_metric_learning.utils.logging_presets as logging_presets
 import matplotlib
-from natsort import natsort_keygen, ns
+from natsort import natsort_keygen
 import cv2
 from PIL import Image
 
@@ -188,14 +188,13 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
     global OUTPUT_PATH, EXPERIMENT_NAME, LABELS, tensorboard_folder
     print(f"Visualizing {len(labels)} embeddings for {split_name} split at epoch {epoch}...")
 
-    # output_dir = os.path.join(OUTPUT_PATH, "umap_plots", EXPERIMENT_NAME)
-    # output_dir = os.path.join(OUTPUT_PATH, "embeddings", EXPERIMENT_NAME)
     plots_dir = os.path.join(OUTPUT_PATH, "embedding_plots", EXPERIMENT_NAME)
     os.makedirs(plots_dir, exist_ok=True)
 
     for embed_type, embed in embeddings.items():
         if embed_type == 'embed':
             # store embeddings for tensorboard's projector
+            os.makedirs(os.path.join(tensorboard_folder, 'embeddings'), exist_ok=True)
             with open(f'{tensorboard_folder}/embeddings/feature_vecs.tsv', 'w') as fw:
                 csv_writer = csv.writer(fw, delimiter='\t')
                 csv_writer.writerows(embed)
@@ -230,10 +229,6 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
         frame.axes.get_yaxis().set_visible(False)
         fig.savefig(os.path.join(plots_dir, f"{embed_type}_{split_name}_{epoch}.png"))
         plt.close()
-
-        # Save embeddings with labels
-        # np.save(os.path.join(plots_dir, f"embeddings_{embed_type}_{split_name}_{epoch}.npy"), embed)
-        # np.save(os.path.join(plots_dir, f"labels_{embed_type}_{split_name}_{epoch}.npy"), labels)
 
 
 def main(args: argparse.Namespace):
