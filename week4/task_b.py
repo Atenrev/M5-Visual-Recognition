@@ -157,7 +157,6 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
     # output_dir = os.path.join(OUTPUT_PATH, "umap_plots", EXPERIMENT_NAME)
     # output_dir = os.path.join(OUTPUT_PATH, "embeddings", EXPERIMENT_NAME)
     plots_dir = os.path.join(OUTPUT_PATH, "embedding_plots", EXPERIMENT_NAME)
-    os.makedirs(plots_dir, exist_ok=True)
 
     for embed_type, embed in embeddings.items():
         # plot embeddings
@@ -204,6 +203,8 @@ def main(args: argparse.Namespace):
     tensorboard_folder = os.path.join(
         args.output_path, "tensorboard", experiment_name)
     os.makedirs(tensorboard_folder, exist_ok=True)
+    plots_dir = os.path.join(args.output_path, "embedding_plots", experiment_name)
+    os.makedirs(plots_dir, exist_ok=True)
     device = 'cuda'
 
     # Model loading
@@ -353,7 +354,7 @@ def main(args: argparse.Namespace):
 
     # Create GIF from embedding plots
     create_GIF(
-        plots_dir=os.path.join(OUTPUT_PATH, "embedding_plots", EXPERIMENT_NAME),
+        plots_dir=plots_dir,
         max_epoch=args.epochs,
     )
 
