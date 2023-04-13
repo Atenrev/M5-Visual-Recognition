@@ -125,6 +125,12 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
     output_dir = os.path.join(OUTPUT_PATH, "embeddig_plots", EXPERIMENT_NAME)
     os.makedirs(output_dir, exist_ok=True)
 
+    scales = {
+        'pca': [[0, 2], [0, 2]],
+        'tsne': [[0, 1], [0, 1]],
+        'umap': [[0, 15], [0, 15]],
+    }
+
     for embed_type, embed in embeddings.items():
         # plot embeddings
         logging.info(
@@ -148,8 +154,8 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
                      ".", markersize=1, label=LABELS[i])
         fig.legend(loc='outside upper right')
         plt.title(f"{embed_type.upper()} - Epoch {epoch}")
-        plt.xlim([0, 12])
-        plt.ylim([0, 12])
+        plt.xlim(scales[embed_type][0])
+        plt.ylim(scales[embed_type][1])
         frame.axes.get_xaxis().set_visible(False)
         frame.axes.get_yaxis().set_visible(False)
         fig.savefig(os.path.join(output_dir, f"{embed_type}_{split_name}_{epoch}.png"))
