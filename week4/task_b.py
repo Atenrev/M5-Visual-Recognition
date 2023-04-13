@@ -1,4 +1,6 @@
 import os
+import imageio
+import glob
 import umap
 import torch
 import logging
@@ -7,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pytorch_metric_learning.utils.logging_presets as logging_presets
 import matplotlib
+from natsort import natsort_keygen, ns
+import cv2
 
 from cycler import cycler
 from pytorch_metric_learning import (
@@ -108,8 +112,6 @@ class CustomVisualizer:
         self.umap = umap.UMAP()
         self.pca = PCA(n_components=2, svd_solver='auto')
 
-    # def fit_transform(self, embeddings):
-    #     return embeddings
     def fit_transform(self, embeddings):
         return {
             'tsne': self.tsne.fit_transform(embeddings),
@@ -118,18 +120,44 @@ class CustomVisualizer:
         }
 
 
+def create_GIF(plots_dir: str, out_name: str, max_epoch: int):
+    natsort_key = natsort_keygen(key=lambda y: y.lower())
+
+    for embed_type in ['pca', 'tsne', 'umap']:
+        embed_plot_files = glob.glob(plots_dir, f"{embed_type}*.png").sort(key=natsort_key)
+        print("embed_plot_files ", embed_plot_files)
+
+        plot_images = []
+        for idx, filename in enumerate(embed_plot_files):
+            frame = cv2.imread(filename)
+            height, width, _ = frame.shape
+            cv2.rectangle(frame, (0, height - 25), (int(idx * (width / len(embed_plot_files))), width), (0, 255, 0), -1)
+
+            epoch = os.path.basename(filename).split("_")[-1].split(".")[0]
+            cv2.putText(
+                frame, f"{epoch}/{max_epoch}",
+                (0.5, 0.5),  # bottom left
+                cv2.FONT_HERSHEY_SIMPLEX,  # font
+                1,  # scale
+                (255,0,0),  # color
+                1,  # thickness
+                cv2.LINE_4,  # line type
+            )
+
+            plot_images.append(frame)
+
+        print(f"Saving GIF for {embed_type.upper()}...")
+        save_path = os.path.join(plots_dir, f"{embed_type}.gif")
+        imageio.mimsave(save_path, plot_images, duration=0.1)
+        print(f"GIF saved at {save_path}")
+
+
 def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, *args):
     global OUTPUT_PATH, EXPERIMENT_NAME, LABELS
     # output_dir = os.path.join(OUTPUT_PATH, "umap_plots", EXPERIMENT_NAME)
     # output_dir = os.path.join(OUTPUT_PATH, "embeddings", EXPERIMENT_NAME)
-    output_dir = os.path.join(OUTPUT_PATH, "embeddig_plots", EXPERIMENT_NAME)
+    output_dir = os.path.join(OUTPUT_PATH, "embedding_plots", EXPERIMENT_NAME)
     os.makedirs(output_dir, exist_ok=True)
-
-    # scales = {
-    #     'pca': [[-1.5, 1.5], [-1.5, 1.5]],
-    #     'tsne': [[-40, 40], [-40, 40]],
-    #     'umap': [[-20, 20], [-20, 20]],
-    # }
 
     for embed_type, embed in embeddings.items():
         # plot embeddings
@@ -151,11 +179,9 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
             idx = labels == label_set[i]
             plt.plot(embed[idx, 0],
                      embed[idx, 1],
-                     ".", markersize=1, label=LABELS[i])
+                     ".", markersize=2, label=LABELS[i])
         fig.legend(loc='outside upper right', markerscale=15)
         plt.title(f"{embed_type.upper()} - Epoch {epoch}")
-        # plt.xlim(scales[embed_type][0])
-        # plt.ylim(scales[embed_type][1])
         frame.axes.get_xaxis().set_visible(False)
         frame.axes.get_yaxis().set_visible(False)
         fig.savefig(os.path.join(output_dir, f"{embed_type}_{split_name}_{epoch}.png"))
@@ -324,6 +350,9 @@ def main(args: argparse.Namespace):
     os.makedirs('./models', exist_ok=True)
     torch.save(model.state_dict(), os.path.join(
         model_folder, f'model_final.pth'))
+
+    # Create GIF from embedding plots
+
 
 
 if __name__ == "__main__":
