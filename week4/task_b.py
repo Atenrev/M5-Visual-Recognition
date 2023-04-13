@@ -199,7 +199,6 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
     for embed_type, embed in embeddings.items():
         if embed_type == 'embed':
             # store embeddings for tensorboard's projector
-            os.makedirs(os.path.join(tensorboard_folder, 'embeddings'), exist_ok=True)
             with open(f'{tensorboard_folder}/feature_vecs.tsv', 'w') as fw:
                 csv_writer = csv.writer(fw, delimiter='\t')
                 csv_writer.writerows(embed)
