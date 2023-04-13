@@ -114,7 +114,7 @@ class CustomVisualizer:
         return {
             'tsne': self.tsne.fit_transform(embeddings),
             'umap': self.umap.fit_transform(embeddings),
-            'pca:': self.pca.fit_transform(embeddings),
+            'pca': self.pca.fit_transform(embeddings),
         }
 
 
