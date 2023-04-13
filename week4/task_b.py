@@ -158,12 +158,14 @@ def create_GIF(plots_dir: str, max_epoch: int):
 
 
 def generate_sprite_image(val_ds):
+    old_transform = val_ds.transform
+    val_ds.transform = None  # Do not apply transforms to images when saving them to sprite
 
     # Gather PIL images for sprite
     images_pil = []
     for img_pt, _ in val_ds:
         print("shape img_pt: ", img_pt.shape)
-        img_np = img_pt.numpy().transpose(1, 2, 0)
+        img_np = img_pt.numpy().transpose(1, 2, 0) * 255
         print("shape img_np: ", img_np.shape)
         # Save PIL image for sprite
         img_pil = Image.fromarray(img_np.astype('uint8'), 'RGB').resize((100, 100))
@@ -185,6 +187,8 @@ def generate_sprite_image(val_ds):
 
     global tensorboard_folder
     spriteimage.convert('RGB').save(f'{tensorboard_folder}/embeddings/sprite.jpg', transparency=0)
+
+    val_ds.transform = old_transform
 
 
 def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, *args):
