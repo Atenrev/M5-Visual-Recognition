@@ -1,6 +1,7 @@
 import os
 
 from torch.utils.data import DataLoader
+from torch.utils.data.dataloader import default_collate
 import kornia.augmentation as K
 from torchvision.datasets import CocoDetection
 from torchvision.transforms import ToTensor
@@ -15,9 +16,12 @@ def create_coco_dataloader(
     inference: bool = False,
     dataset_kwargs: dict = {},
 ):
-
-    transforms = [K.Resize((config.input_resize,config.input_resize)), K.Normalize(mean=[0.4850, 0.4560, 0.4060], std=[0.2290, 0.2240,
-                                                                                                 0.2250]), ]
+    transforms = [
+        K.Resize((config.input_resize, config.input_resize)),
+        K.Normalize(
+            mean=[0.4850, 0.4560, 0.4060],
+            std=[0.2290, 0.2240, 0.2250]),
+    ]
     # transforms = []
     train_transforms = list(transforms)
 
@@ -60,18 +64,24 @@ def create_coco_dataloader(
         transform=ToTensor(),
     )
 
+    def collate_fn(batch):
+        batch = list(filter(lambda x: x is not None, batch))
+        return default_collate(batch)
+
     if not inference:
         train_dataloader = DataLoader(
             dataset=train_dataset,
             batch_size=batch_size,
             shuffle=False,
             num_workers=0,
+            collate_fn=collate_fn,
         )
         test_dataloader = DataLoader(
             dataset=test_dataset,
             batch_size=batch_size,
             shuffle=False,
             num_workers=0,
+            collate_fn=collate_fn,
         )
     else:
         train_dataset = test_dataset
@@ -81,6 +91,7 @@ def create_coco_dataloader(
             batch_size=batch_size,
             shuffle=False,
             num_workers=0,
+            collate_fn=collate_fn,
         )
 
     return train_dataloader, test_dataloader
