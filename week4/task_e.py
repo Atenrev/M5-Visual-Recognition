@@ -18,6 +18,8 @@ from src.models.resnet import ResNetWithEmbedder
 from src.utils import get_configuration
 from src.datasets.coco import create_coco_dataloader
 
+import logging
+
 
 
 def _parse_args() -> argparse.Namespace:
@@ -141,6 +143,7 @@ def get_base_cfg(args):
 
 
 def main(args: argparse.Namespace):
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
@@ -157,7 +160,9 @@ def main(args: argparse.Namespace):
         args.batch_size, args.dataset_path, dataset_config
     )
     train_ds = train_dataloader.dataset
-    # val_ds = val_dataloader.dataset
+    val_ds = val_dataloader.dataset
+    logging.info(f"Train dataset size: {len(train_ds)}")
+    logging.info(f"Val dataset size: {len(val_ds)}")
 
     # Loss configuration
     distance = distances.CosineSimilarity()
@@ -189,6 +194,7 @@ def main(args: argparse.Namespace):
         # end_of_iteration_hook=hooks.end_of_iteration_hook,
         # end_of_epoch_hook=end_of_epoch_hook,
     )
+    logging.info("Starting training")
     trainer.train(num_epochs=args.epochs)
 
 
