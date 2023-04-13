@@ -93,6 +93,8 @@ def __parse_args() -> argparse.Namespace:
                         help='Learning rate for the trunk.')
     parser.add_argument('--lr_embedder', type=float, default=1e-4,
                         help='Learning rate for the embedder.')
+    parser.add_argument('--weight_decay', type=float, default=1e-4,
+                        help='Weight decay.')
 
     args = parser.parse_args()
     return args
@@ -298,9 +300,9 @@ def main(args: argparse.Namespace):
     # Optimizer configuration
     if args.optimizer == 'adam':
         trunk_optimizer = torch.optim.Adam(
-            model.trunk.parameters(), lr=args.lr_trunk)
+            model.trunk.parameters(), lr=args.lr_trunk, weight_decay=args.weight_decay)
         embedder_optimizer = torch.optim.Adam(
-            model.embedder.parameters(), lr=args.lr_embedder)
+            model.embedder.parameters(), lr=args.lr_embedder, weight_decay=args.weight_decay)
     elif args.optimizer == 'sgd':
         trunk_optimizer = torch.optim.SGD(model.parameters(), lr=args.lr_trunk)
         embedder_optimizer = torch.optim.SGD(
