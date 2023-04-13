@@ -126,9 +126,9 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
     os.makedirs(output_dir, exist_ok=True)
 
     scales = {
-        'pca': [[0, 2], [0, 2]],
-        'tsne': [[0, 1], [0, 1]],
-        'umap': [[0, 15], [0, 15]],
+        'pca': [[-1.5, 1.5], [-1.5, 1.5]],
+        'tsne': [[-10, 10], [-10, 10]],
+        'umap': [[-15, 15], [-15, 15]],
     }
 
     for embed_type, embed in embeddings.items():
