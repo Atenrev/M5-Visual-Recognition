@@ -127,8 +127,8 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
 
     scales = {
         'pca': [[-1.5, 1.5], [-1.5, 1.5]],
-        'tsne': [[-10, 10], [-10, 10]],
-        'umap': [[-15, 15], [-15, 15]],
+        'tsne': [[-30, 30], [-30, 30]],
+        'umap': [[-20, 20], [-20, 20]],
     }
 
     for embed_type, embed in embeddings.items():
@@ -152,7 +152,7 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
             plt.plot(embed[idx, 0],
                      embed[idx, 1],
                      ".", markersize=1, label=LABELS[i])
-        fig.legend(loc='outside upper right')
+        fig.legend(loc='outside upper right', markerscale=5)
         plt.title(f"{embed_type.upper()} - Epoch {epoch}")
         plt.xlim(scales[embed_type][0])
         plt.ylim(scales[embed_type][1])
