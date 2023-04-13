@@ -120,7 +120,7 @@ class CustomVisualizer:
         }
 
 
-def create_GIF(plots_dir: str, out_name: str, max_epoch: int):
+def create_GIF(plots_dir: str, max_epoch: int):
     natsort_key = natsort_keygen(key=lambda y: y.lower())
 
     for embed_type in ['pca', 'tsne', 'umap']:
@@ -156,8 +156,8 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
     global OUTPUT_PATH, EXPERIMENT_NAME, LABELS
     # output_dir = os.path.join(OUTPUT_PATH, "umap_plots", EXPERIMENT_NAME)
     # output_dir = os.path.join(OUTPUT_PATH, "embeddings", EXPERIMENT_NAME)
-    output_dir = os.path.join(OUTPUT_PATH, "embedding_plots", EXPERIMENT_NAME)
-    os.makedirs(output_dir, exist_ok=True)
+    plots_dir = os.path.join(OUTPUT_PATH, "embedding_plots", EXPERIMENT_NAME)
+    os.makedirs(plots_dir, exist_ok=True)
 
     for embed_type, embed in embeddings.items():
         # plot embeddings
@@ -184,11 +184,11 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
         plt.title(f"{embed_type.upper()} - Epoch {epoch}")
         frame.axes.get_xaxis().set_visible(False)
         frame.axes.get_yaxis().set_visible(False)
-        fig.savefig(os.path.join(output_dir, f"{embed_type}_{split_name}_{epoch}.png"))
+        fig.savefig(os.path.join(plots_dir, f"{embed_type}_{split_name}_{epoch}.png"))
         plt.close()
         # Save embeddings with labels
-        # np.save(os.path.join(output_dir, f"embeddings_{embed_type}_{split_name}_{epoch}.npy"), embed)
-        # np.save(os.path.join(output_dir, f"labels_{embed_type}_{split_name}_{epoch}.npy"), labels)
+        # np.save(os.path.join(plots_dir, f"embeddings_{embed_type}_{split_name}_{epoch}.npy"), embed)
+        # np.save(os.path.join(plots_dir, f"labels_{embed_type}_{split_name}_{epoch}.npy"), labels)
 
 
 def main(args: argparse.Namespace):
@@ -352,7 +352,10 @@ def main(args: argparse.Namespace):
         model_folder, f'model_final.pth'))
 
     # Create GIF from embedding plots
-
+    create_GIF(
+        plots_dir=os.path.join(OUTPUT_PATH, "embedding_plots", EXPERIMENT_NAME),
+        max_epoch=args.epochs,
+    )
 
 
 if __name__ == "__main__":
