@@ -124,7 +124,8 @@ def create_GIF(plots_dir: str, max_epoch: int):
     natsort_key = natsort_keygen(key=lambda y: y.lower())
 
     for embed_type in ['pca', 'tsne', 'umap']:
-        embed_plot_files = glob.glob(os.path.join(plots_dir, f"{embed_type}*.png")).sort(key=natsort_key)
+        embed_plot_files = glob.glob(os.path.join(plots_dir, f"{embed_type}*.png"))
+        embed_plot_files.sort(key=natsort_key)
         print("embed_plot_files ", embed_plot_files)
 
         plot_images = []
@@ -136,7 +137,7 @@ def create_GIF(plots_dir: str, max_epoch: int):
             epoch = os.path.basename(filename).split("_")[-1].split(".")[0]
             cv2.putText(
                 frame, f"{epoch}/{max_epoch}",
-                (0.5, 0.5),  # bottom left
+                (1, 1),  # bottom left
                 cv2.FONT_HERSHEY_SIMPLEX,  # font
                 1,  # scale
                 (255,0,0),  # color
