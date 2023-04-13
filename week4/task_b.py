@@ -85,7 +85,7 @@ def __parse_args() -> argparse.Namespace:
     # Training configuration
     parser.add_argument('--optimizer', type=str, default='adam',
                         help='Optimizer to use. Options: adam, sgd.')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=2,
                         help='Number of epochs.')
     parser.add_argument('--batch_size', type=int, default=16,
                         help='Batch size.')
