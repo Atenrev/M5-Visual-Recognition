@@ -162,8 +162,11 @@ def generate_sprite_image(val_ds):
     # Gather PIL images for sprite
     images_pil = []
     for img_pt, _ in val_ds:
+        print("shape img_pt: ", img_pt.shape)
+        img_np = img_pt.numpy().transpose(1, 2, 0)
+        print("shape img_np: ", img_np.shape)
         # Save PIL image for sprite
-        img_pil = Image.fromarray(img_pt.numpy().astype('uint8'), 'RGB').resize((100, 100))
+        img_pil = Image.fromarray(img_np.astype('uint8'), 'RGB').resize((100, 100))
         images_pil.append(img_pil)
 
     one_square_size = int(np.ceil(np.sqrt(len(val_ds))))
