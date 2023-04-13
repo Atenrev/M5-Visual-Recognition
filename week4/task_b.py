@@ -18,9 +18,14 @@ from src.datasets.mit_split import create_mit_dataloader
 from src.models.resnet import ResNetWithEmbedder
 from src.models.vgg import VGG19
 
+import umap
+from sklearn import manifold
+from sklearn.decomposition import PCA
+
 
 OUTPUT_PATH = './outputs'
 EXPERIMENT_NAME = None
+LABELS = ['coast', 'forest', 'highway', 'inside_city', 'mountain', 'Opencountry', 'street', 'tallbuilding']
 
 
 def __parse_args() -> argparse.Namespace:
@@ -89,39 +94,69 @@ def __parse_args() -> argparse.Namespace:
     return args
 
 
-class ProxyVisualizer:
+class CustomVisualizer:
+    def __init__(self):
+        self.tsne = manifold.TSNE(
+            n_components=2,
+            perplexity=30,
+            early_exaggeration=12,
+            learning_rate="auto",
+            n_iter=800,
+            random_state=41,
+            n_jobs=-1,
+        )
+        self.umap = umap.UMAP()
+        self.pca = PCA(n_components=2, svd_solver='auto')
+
+    # def fit_transform(self, embeddings):
+    #     return embeddings
     def fit_transform(self, embeddings):
-        return embeddings
+        return {
+            'tsne': self.tsne.fit_transform(embeddings),
+            'umap': self.umap.fit_transform(embeddings),
+            'pca:': self.pca.fit_transform(embeddings),
+        }
 
 
 def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, *args):
-    global OUTPUT_PATH, EXPERIMENT_NAME
+    global OUTPUT_PATH, EXPERIMENT_NAME, LABELS
     # output_dir = os.path.join(OUTPUT_PATH, "umap_plots", EXPERIMENT_NAME)
-    output_dir = os.path.join(OUTPUT_PATH, "embeddings", EXPERIMENT_NAME)
+    # output_dir = os.path.join(OUTPUT_PATH, "embeddings", EXPERIMENT_NAME)
+    output_dir = os.path.join(OUTPUT_PATH, "embeddig_plots", EXPERIMENT_NAME)
     os.makedirs(output_dir, exist_ok=True)
-    # Save embeddings with labels
-    np.save(os.path.join(output_dir, f"embeddings_{split_name}_{epoch}.npy"), embeddings)
-    np.save(os.path.join(output_dir, f"labels_{split_name}_{epoch}.npy"), labels)
 
-    # logging.info(
-    #     "UMAP plot for the {} split and label set {}".format(
-    #         split_name, keyname)
-    # )
-    # label_set = np.unique(labels)
-    # num_classes = len(label_set)
-    # fig = plt.figure(figsize=(20, 15))
-    # plt.gca().set_prop_cycle(
-    #     cycler(
-    #         "color", [plt.cm.nipy_spectral(i)
-    #                   for i in np.linspace(0, 0.9, num_classes)]
-    #     )
-    # )
-    # for i in range(num_classes):
-    #     idx = labels == label_set[i]
-    #     plt.plot(embeddings[idx, 0],
-    #              embeddings[idx, 1], ".", markersize=1)
-    # plt.show()
-    # fig.savefig(os.path.join(output_dir, f"umap_{split_name}_{epoch}.png"))
+    for embed_type, embed in embeddings.items():
+        # plot embeddings
+        logging.info(
+            "{} plot for the {} split and label set {}".format(
+                embed_type.upper(), split_name, keyname)
+        )
+        label_set = np.unique(labels)
+        num_classes = len(label_set)
+        fig = plt.figure(figsize=(15, 9))
+        frame = plt.gca()
+        frame.set_prop_cycle(
+            cycler(
+                "color", [plt.cm.nipy_spectral(i)
+                        for i in np.linspace(0, 0.9, num_classes)]
+            )
+        )
+        for i in range(num_classes):
+            idx = labels == label_set[i]
+            plt.plot(embed[idx, 0],
+                     embed[idx, 1],
+                     ".", markersize=1, label=LABELS[i])
+        fig.legend(loc='outside upper right')
+        plt.title(f"{embed_type.upper()} - Epoch {epoch}")
+        plt.xlim([0, 12])
+        plt.ylim([0, 12])
+        frame.axes.get_xaxis().set_visible(False)
+        frame.axes.get_yaxis().set_visible(False)
+        fig.savefig(os.path.join(output_dir, f"{embed_type}_{split_name}_{epoch}.png"))
+        plt.close()
+        # Save embeddings with labels
+        # np.save(os.path.join(output_dir, f"embeddings_{embed_type}_{split_name}_{epoch}.npy"), embed)
+        # np.save(os.path.join(output_dir, f"labels_{embed_type}_{split_name}_{epoch}.npy"), labels)
 
 
 def main(args: argparse.Namespace):
@@ -248,8 +283,7 @@ def main(args: argparse.Namespace):
     # https://kevinmusgrave.github.io/pytorch-metric-learning/testers/
     tester = testers.GlobalEmbeddingSpaceTester(
         end_of_testing_hook=hooks.end_of_testing_hook,
-        # visualizer=umap.UMAP(),
-        visualizer=ProxyVisualizer(),
+        visualizer=CustomVisualizer(),
         visualizer_hook=visualizer_hook,
         dataloader_num_workers=1,
         accuracy_calculator=AccuracyCalculator(k="max_bin_count"),
