@@ -1,3 +1,4 @@
+import csv
 import os
 import imageio
 import glob
@@ -9,8 +10,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pytorch_metric_learning.utils.logging_presets as logging_presets
 import matplotlib
-from natsort import natsort_keygen, ns
+from natsort import natsort_keygen
 import cv2
+from PIL import Image
 
 from cycler import cycler
 from pytorch_metric_learning import (
@@ -30,6 +32,7 @@ from sklearn.decomposition import PCA
 OUTPUT_PATH = './outputs'
 EXPERIMENT_NAME = None
 LABELS = ['coast', 'forest', 'highway', 'inside_city', 'mountain', 'Opencountry', 'street', 'tallbuilding']
+tensorboard_folder = ''
 
 
 def __parse_args() -> argparse.Namespace:
@@ -108,17 +111,18 @@ class CustomVisualizer:
             early_exaggeration=12,
             learning_rate="auto",
             n_iter=800,
-            random_state=41,
+            random_state=42,
             n_jobs=-1,
         )
-        self.umap = umap.UMAP()
-        self.pca = PCA(n_components=2, svd_solver='auto')
+        self.umap = umap.UMAP(random_state=42)
+        self.pca = PCA(n_components=2, svd_solver='auto', random_state=42)
 
     def fit_transform(self, embeddings):
         return {
             'tsne': self.tsne.fit_transform(embeddings),
             'umap': self.umap.fit_transform(embeddings),
             'pca': self.pca.fit_transform(embeddings),
+            'embed': embeddings,
         }
 
 
@@ -151,17 +155,71 @@ def create_GIF(plots_dir: str, max_epoch: int):
 
         print(f"Saving GIF for {embed_type.upper()}...")
         save_path = os.path.join(plots_dir, f"{embed_type}.gif")
-        imageio.mimsave(save_path, plot_images, duration=0.1)
+        imageio.mimsave(save_path, plot_images, duration=0.6)
         print(f"GIF saved at {save_path}")
 
 
+def generate_sprite_image(val_ds):
+    old_transform = val_ds.transform
+    val_ds.transform = None  # Do not apply transforms to images when saving them to sprite
+
+    # Gather PIL images for sprite
+    images_pil = []
+    for img_pt, _ in val_ds:
+        img_np = img_pt.numpy().transpose(1, 2, 0) * 255
+        # Save PIL image for sprite
+        img_pil = Image.fromarray(img_np.astype('uint8'), 'RGB').resize((100, 100))
+        images_pil.append(img_pil)
+
+    one_square_size = int(np.ceil(np.sqrt(len(val_ds))))
+    master_width = 100 * one_square_size
+    master_height = 100 * one_square_size
+    spriteimage = Image.new(
+        mode='RGBA',
+        size=(master_width, master_height),
+        color=(0,0,0,0)  # fully transparent
+    )
+    for count, image in enumerate(images_pil):
+        div, mod = divmod(count, one_square_size)
+        h_loc = 100 * div
+        w_loc = 100 * mod
+        spriteimage.paste(image, (w_loc, h_loc))
+
+    global tensorboard_folder
+    spriteimage.convert('RGB').save(f'{tensorboard_folder}/sprite.jpg', transparency=0)
+
+    val_ds.transform = old_transform
+
+
 def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, *args):
-    global OUTPUT_PATH, EXPERIMENT_NAME, LABELS
-    # output_dir = os.path.join(OUTPUT_PATH, "umap_plots", EXPERIMENT_NAME)
-    # output_dir = os.path.join(OUTPUT_PATH, "embeddings", EXPERIMENT_NAME)
+    global OUTPUT_PATH, EXPERIMENT_NAME, LABELS, tensorboard_folder
+    print(f"Visualizing {len(labels)} embeddings for {split_name} split at epoch {epoch}...")
+
     plots_dir = os.path.join(OUTPUT_PATH, "embedding_plots", EXPERIMENT_NAME)
 
     for embed_type, embed in embeddings.items():
+        if embed_type == 'embed':
+            # store embeddings for tensorboard's projector
+            with open(f'{tensorboard_folder}/feature_vecs.tsv', 'w') as fw:
+                csv_writer = csv.writer(fw, delimiter='\t')
+                csv_writer.writerows(embed)
+            with open(f'{tensorboard_folder}/metadata.tsv', 'w') as file:
+                for label in labels:
+                    file.write(f'{label}\n')
+
+            x = """embeddings {
+  tensor_path: "feature_vecs.tsv"
+  sprite {
+    image_path: "sprite.jpg"
+    single_image_dim: 100
+    single_image_dim: 100
+  }
+}"""
+            with open(f"{tensorboard_folder}/projector_config.pbtxt","w") as f:
+                f.writelines(x)
+
+            continue
+
         # plot embeddings
         logging.info(
             "{} plot for the {} split and label set {}".format(
@@ -188,9 +246,6 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
         frame.axes.get_yaxis().set_visible(False)
         fig.savefig(os.path.join(plots_dir, f"{embed_type}_{split_name}_{epoch}.png"))
         plt.close()
-        # Save embeddings with labels
-        # np.save(os.path.join(plots_dir, f"embeddings_{embed_type}_{split_name}_{epoch}.npy"), embed)
-        # np.save(os.path.join(plots_dir, f"labels_{embed_type}_{split_name}_{epoch}.npy"), labels)
 
 
 def main(args: argparse.Namespace):
@@ -203,6 +258,7 @@ def main(args: argparse.Namespace):
     os.makedirs(model_folder, exist_ok=True)
     logs_folder = os.path.join(args.output_path, "logs", experiment_name)
     os.makedirs(logs_folder, exist_ok=True)
+    global tensorboard_folder
     tensorboard_folder = os.path.join(
         args.output_path, "tensorboard", experiment_name)
     os.makedirs(tensorboard_folder, exist_ok=True)
@@ -360,6 +416,8 @@ def main(args: argparse.Namespace):
         plots_dir=plots_dir,
         max_epoch=args.epochs,
     )
+
+    generate_sprite_image(val_ds)
 
 
 if __name__ == "__main__":
