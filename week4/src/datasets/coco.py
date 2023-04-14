@@ -124,14 +124,14 @@ def create_coco_dataloader(
             batch_size=batch_size,
             shuffle=False,
             num_workers=0,
-            collate_fn=lambda x: x,
+            collate_fn=lambda batch: tuple(zip(*batch)),
         )
         test_dataloader = DataLoader(
             dataset=test_dataset,
             batch_size=batch_size,
             shuffle=False,
             num_workers=0,
-            collate_fn=lambda x: x,
+            collate_fn=lambda batch: tuple(zip(*batch)),
         )
     else:
         train_dataset = test_dataset
@@ -141,7 +141,7 @@ def create_coco_dataloader(
             batch_size=batch_size,
             shuffle=False,
             num_workers=0,
-            collate_fn=lambda x: x,
+            collate_fn=lambda batch: tuple(zip(*batch)),
         )
 
     return train_dataloader, test_dataloader
