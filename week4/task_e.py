@@ -161,6 +161,11 @@ def main(args: argparse.Namespace):
     logging.info(f"Train dataset size: {len(train_ds)}")
     logging.info(f"Val dataset size: {len(val_ds)}")
 
+    # sample = train_ds[1]
+    # image, target = sample
+    # print(type(image))
+    # print(type(target), type(target[0]), list(target[0].keys()))
+
     # Loss configuration
     distance = distances.CosineSimilarity()
     criterion = losses.TripletMarginLoss(
