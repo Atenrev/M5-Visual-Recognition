@@ -17,6 +17,7 @@ from src.models.resnet import ResNetWithEmbedder
 
 from src.utils import get_configuration
 from src.datasets.coco import create_coco_dataloader
+from src.datasets.coco import TripletCOCO
 
 import logging
 
@@ -165,6 +166,11 @@ def main(args: argparse.Namespace):
     # image, target = sample
     # print(type(image))
     # print(type(target), type(target[0]), list(target[0].keys()))
+
+    # Triplet COCO dataset
+    train_dataset = TripletCOCO(train_ds)
+
+    train_dataset.__getitem__(1)
 
     # Loss configuration
     distance = distances.CosineSimilarity()

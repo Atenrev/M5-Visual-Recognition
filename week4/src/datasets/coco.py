@@ -1,22 +1,162 @@
 import os
+import numpy as np
+
+import torch
+from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
+
+from torchvision.datasets import CocoDetection
+import torchvision.transforms.v2 as transforms
+from torchvision import datasets
+
+from typing import Any
+
+
 # from collections import defaultdict
 # from pathlib import Path
 # import json
 # from PIL import Image
-#
 # import PIL.Image
 
-import torch
-from torch.utils.data import DataLoader
-# from torch.utils.data import Dataset
 
-from torchvision.datasets import CocoDetection
+def create_coco_dataloader(
+        batch_size: int,
+        dataset_path: str,
+        config: Any,
+        inference: bool = False,
+        dataset_kwargs: dict = {},
+):
+    transform = transforms.Compose(
+        [
+            transforms.Resize((config.input_resize, config.input_resize)),
+            transforms.ToImageTensor(),
+            transforms.ConvertImageDtype(torch.float32),
+            transforms.Normalize(
+                mean=[0.4850, 0.4560, 0.4060],
+                std=[0.2290, 0.2240, 0.2250]),
+        ])
 
-import torchvision.transforms.v2 as transforms
+    train_dataset = CocoDetection(
+        root=os.path.join(dataset_path, "train2014"),
+        annFile=os.path.join(dataset_path, "instances_train2014.json"),
+        transforms=transform,
+    )
+    train_dataset = datasets.wrap_dataset_for_transforms_v2(train_dataset)
 
-from torchvision import datasets
+    test_dataset = CocoDetection(
+        root=os.path.join(dataset_path, "val2014"),
+        annFile=os.path.join(dataset_path, "instances_val2014.json"),
+        transforms=transform,
+    )
+    test_dataset = datasets.wrap_dataset_for_transforms_v2(test_dataset)
 
-from typing import Any
+    if not inference:
+        train_dataloader = DataLoader(
+            dataset=train_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=0,
+            collate_fn=lambda batch: tuple(zip(*batch)),
+        )
+        test_dataloader = DataLoader(
+            dataset=test_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=0,
+            collate_fn=lambda batch: tuple(zip(*batch)),
+        )
+    else:
+        train_dataset = test_dataset
+        test_dataloader = test_dataset = None
+        train_dataloader = DataLoader(
+            dataset=train_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=0,
+            collate_fn=lambda batch: tuple(zip(*batch)),
+        )
+
+    return train_dataloader, test_dataloader
+
+
+class TripletCOCO(Dataset):
+    """
+    Custom Dataset class for generating triplets from COCO dataset for image retrieval task with Faster R-CNN or Mask R-CNN.
+    """
+
+    def __init__(self, coco_dataset, transform=None):
+        """
+        Args:
+            coco_dataset (COCODataset): COCO dataset object, e.g., torchvision.datasets.CocoDetection
+            transform (callable, optional): Optional transform to be applied on the images. Default is None.
+        """
+        self.coco_dataset = coco_dataset
+        self.transform = transform
+        self.categories = self.get_categories()
+
+    def get_categories(self):
+        categories = []
+        for i in range(len(self.coco_dataset)):
+            ann_ids = self.coco_dataset.coco.getAnnIds(imgIds=self.coco_dataset.ids[i])
+
+            # if not ann_ids:
+            #     print(f"ann_ids is int: {ann_ids}, image id: {self.coco_dataset.ids[i]} number: {i}")
+            #     break
+
+            if len(ann_ids) > 0:
+                ann_ids = ann_ids[0]
+                # Need to access 0 because loadAnns always returns a list!
+                cat = self.coco_dataset.coco.loadAnns(ann_ids)[0]['category_id']
+            else:
+                cat = -1
+            categories.append(cat)
+        return categories
+
+    def __getitem__(self, index):
+        """
+        Generates a triplet of images (anchor, positive, negative) for the given index.
+
+        Args:
+            index (int): Index of the anchor image.
+
+        Returns:
+            tuple: A tuple of anchor, positive, and negative images along with empty lists for target and metadata.
+        """
+        # Get the anchor image
+        anchor_img, _ = self.coco_dataset[index]
+
+        # Get the category of the anchor image
+        anchor_ann_id = self.coco_dataset.coco.getAnnIds(imgIds=self.coco_dataset.ids[index])
+        anchor_category = self.coco_dataset.coco.loadAnns(anchor_ann_id)[0]['category_id']
+
+        # Find positive sample (image containing the same category as anchor)
+        positive_indices = np.where((np.asarray(self.coco_dataset.ids) != index) &
+                                    (np.asarray(self.categories) == anchor_category))[0]
+        positive_index = np.random.choice(positive_indices)
+        positive_img, _ = self.coco_dataset[positive_index]
+
+        # Find negative sample (image containing a different category than anchor)
+        negative_indices = np.where(np.asarray(self.categories) != anchor_category)[0]
+        negative_index = np.random.choice(negative_indices)
+        negative_img, _ = self.coco_dataset[negative_index]
+
+        # Apply transformations if provided
+        if self.transform is not None:
+            anchor_img = self.transform(anchor_img)
+            positive_img = self.transform(positive_img)
+            negative_img = self.transform(negative_img)
+
+        # Return the triplet along with empty lists for target and metadata
+        return (anchor_img, positive_img, negative_img), [], []
+
+    def __len__(self):
+        """
+        Returns the length of the dataset.
+
+        Returns:
+            int: Number of samples in the dataset.
+        """
+        return len(self.coco_dataset)
 
 
 # class CocoDataset(Dataset):
@@ -85,63 +225,3 @@ from typing import Any
 #             target['boxes'][:, 1::2] /= height
 #
 #         return image, target
-
-
-def create_coco_dataloader(
-    batch_size: int,
-    dataset_path: str,
-    config: Any,
-    inference: bool = False,
-    dataset_kwargs: dict = {},
-):
-    transform = transforms.Compose(
-        [
-         transforms.Resize((config.input_resize, config.input_resize)),
-         transforms.ToImageTensor(),
-         transforms.ConvertImageDtype(torch.float32),
-         transforms.Normalize(
-             mean=[0.4850, 0.4560, 0.4060],
-             std=[0.2290, 0.2240, 0.2250]),
-         ])
-
-    train_dataset = CocoDetection(
-        root=os.path.join(dataset_path, "train2014"),
-        annFile=os.path.join(dataset_path, "instances_train2014.json"),
-        transforms=transform,
-    )
-    train_dataset = datasets.wrap_dataset_for_transforms_v2(train_dataset)
-
-    test_dataset = CocoDetection(
-        root=os.path.join(dataset_path, "val2014"),
-        annFile=os.path.join(dataset_path, "instances_val2014.json"),
-        transforms=transform,
-    )
-    test_dataset = datasets.wrap_dataset_for_transforms_v2(test_dataset)
-
-    if not inference:
-        train_dataloader = DataLoader(
-            dataset=train_dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=0,
-            collate_fn=lambda batch: tuple(zip(*batch)),
-        )
-        test_dataloader = DataLoader(
-            dataset=test_dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=0,
-            collate_fn=lambda batch: tuple(zip(*batch)),
-        )
-    else:
-        train_dataset = test_dataset
-        test_dataloader = test_dataset = None
-        train_dataloader = DataLoader(
-            dataset=train_dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=0,
-            collate_fn=lambda batch: tuple(zip(*batch)),
-        )
-
-    return train_dataloader, test_dataloader
