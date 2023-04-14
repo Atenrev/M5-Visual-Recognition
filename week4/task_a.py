@@ -22,8 +22,9 @@ LABELS = ['coast', 'forest', 'highway', 'inside_city', 'mountain', 'Opencountry'
 OUTPUT_PATH = './outputs_task_a'
 EXPERIMENT_NAME = 'None'  # TODO: set experiment name, Adria no te n'oblidis
 EXPERIMENT_DIR = os.path.join(OUTPUT_PATH, EXPERIMENT_NAME)
+os.makedirs(EXPERIMENT_DIR, exist_ok=True)
 tensorboard_folder = os.path.join(EXPERIMENT_DIR, 'tensorboard')
-
+os.makedirs(tensorboard_folder, exist_ok=True)
 
 def generate_sprite_image(val_ds):
     old_transform = val_ds.transform
