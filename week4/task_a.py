@@ -20,7 +20,7 @@ from src.models.vgg import VGG19
 LABELS = ['coast', 'forest', 'highway', 'inside_city', 'mountain', 'Opencountry', 'street', 'tallbuilding']
 
 OUTPUT_PATH = './outputs_task_a'
-EXPERIMENT_NAME = None  # TODO: set experiment name, Adria no te n'oblidis
+EXPERIMENT_NAME = 'None'  # TODO: set experiment name, Adria no te n'oblidis
 EXPERIMENT_DIR = os.path.join(OUTPUT_PATH, EXPERIMENT_NAME)
 tensorboard_folder = os.path.join(EXPERIMENT_DIR, 'tensorboard')
 
