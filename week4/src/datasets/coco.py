@@ -116,8 +116,9 @@ class TripletCOCO(Dataset):
         positive_ids = self.retrieval_annotations[self.subset][str(category_id)]
 
         # Select positive example
-        positive_ids.remove(img_id)
-        positive_id = random.choice(positive_ids)
+        positive_id = img_id
+        while positive_id == img_id:
+            positive_id = random.choice(positive_ids)
         positive_index = self.coco_dataset.ids.index(positive_id)
         positive_img, _ = self.coco_dataset[positive_index]
 
@@ -136,10 +137,8 @@ class TripletCOCO(Dataset):
     def get_labels(self, idx):
         """
         Returns the category labels corresponding to the given indices.
-
         Args:
             idx (numpy.ndarray): Array of indices.
-
         Returns:
             numpy.ndarray: Array of category labels corresponding to the given indices.
         """
