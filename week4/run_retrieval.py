@@ -64,7 +64,7 @@ def run_experiment(model, embed_size, n_neighbors=50):
 
         query = (return_image_full_range(query))
         nns, distances = annoy.retrieve_by_vector(V, n=n_neighbors, include_distances=True)
-        labels, images = list(), list()
+        labels = list()
 
         for nn in nns:
             _, label = train_ds.dataset[nn]
