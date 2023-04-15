@@ -83,89 +83,6 @@ def create_coco_dataloader(
     return train_dataloader, test_dataloader
 
 
-class TripletDatasetCOCO(Dataset):
-    """
-    Custom Dataset class for generating triplets from COCO dataset for image retrieval task with Faster R-CNN or Mask R-CNN.
-    """
-
-    def __init__(self, coco_dataset, transform=None):
-        """
-        Args:
-            coco_dataset (COCODataset): COCO dataset object, e.g., torchvision.datasets.CocoDetection
-            transform (callable, optional): Optional transform to be applied on the images. Default is None.
-        """
-        self.coco_dataset = coco_dataset
-        self.transform = transform
-        self.ids = self.get_images_with_annotations()
-        self.categories = self.get_categories()
-
-    def get_images_with_annotations(self):
-        return [id for id in self.coco_dataset.ids if self.coco_dataset.coco.getAnnIds(imgIds=id)]
-        # return [len(self.coco_dataset.coco.getAnnIds(imgIds=id)) > 0 for id in self.coco_dataset.ids]
-
-    def get_categories(self):
-        categories = []
-        for i in range(len(self.coco_dataset)):
-            ann_ids = self.coco_dataset.coco.getAnnIds(imgIds=self.coco_dataset.ids[i])
-            if len(ann_ids) > 0:
-                ann_ids = ann_ids[0]
-                # Need to access 0 because loadAnns always returns a list!
-                cat = self.coco_dataset.coco.loadAnns(ann_ids)[0]['category_id']
-            else:
-                cat = -1
-            categories.append(cat)
-        return categories
-
-    def __getitem__(self, index):
-        """
-        Generates a triplet of images (anchor, positive, negative) for the given index.
-
-        Args:
-            index (int): Index of the anchor image.
-
-        Returns:
-            tuple: A tuple of anchor, positive, and negative images along with empty lists for target and metadata.
-        """
-        # Get the anchor image
-        anchor_img, _ = self.coco_dataset[index]
-
-        # Get the category of the anchor image
-        print(f"image: {index}, id: {self.coco_dataset.ids[index]}, correct_id: {self.ids[index]}")
-        anchor_ann_id = self.coco_dataset.coco.getAnnIds(imgIds=self.ids[index])[0]  # select only the 1st annotation!
-        anchor_category = self.coco_dataset.coco.loadAnns(anchor_ann_id)[0]['category_id']
-
-        # Find positive sample (image containing the same category as anchor)
-        positive_indices = np.where((np.asarray(self.ids) != self.ids[index]) &
-                                    (np.asarray(self.categories) == anchor_category))[0]
-        positive_index = np.random.choice(positive_indices)
-        positive_img, _ = self.coco_dataset[positive_index]
-
-        # Find negative sample (image containing a different category than anchor)
-        negative_indices = np.where((np.asarray(self.ids) != self.ids[index]) &
-                                    (np.asarray(self.ids) != self.ids[index]) &
-                                    (np.asarray(self.categories) != anchor_category))[0]
-        negative_index = np.random.choice(negative_indices)
-        negative_img, _ = self.coco_dataset[negative_index]
-
-        # Apply transformations if provided
-        if self.transform is not None:
-            anchor_img = self.transform(anchor_img)
-            positive_img = self.transform(positive_img)
-            negative_img = self.transform(negative_img)
-
-        # Return the triplet along with empty lists for target
-        return anchor_img, positive_img, negative_img, []
-
-    def __len__(self):
-        """
-        Returns the length of the dataset.
-
-        Returns:
-            int: Number of samples in the dataset.
-        """
-        return len(self.coco_dataset)
-
-
 class TripletCOCO(Dataset):
     """
     Custom dataset class for creating triplets from COCO dataset for image retrieval task with Faster R-CNN or Mask R-CNN.
@@ -229,119 +146,50 @@ class TripletCOCO(Dataset):
         return np.array([self.coco_dataset.coco.loadAnns(self.coco_dataset.coco.getAnnIds(imgIds=self.coco_dataset.ids[i]))[0]['category_id'] for i in idx])
 
 
-
-class TripletCOCOMiner(BaseMiner):
+class TripletHistogramsCOCO(Dataset):
     """
-    Custom Triplet Miner class for mining triplets from COCO dataset for image retrieval task with Faster R-CNN or Mask R-CNN.
+    Custom dataset class for creating triplets from COCO dataset for image retrieval task with Faster R-CNN or Mask R-CNN.
     """
 
-    def __init__(self, margin=0.1, **kwargs):
+    def __init__(self, coco_dataset, json_file, subset, k=1):
         """
         Args:
-            margin (float, optional): Margin value for triplet mining. Default is 0.1.
-            **kwargs: Additional keyword arguments to be passed to the parent class (BaseMiner).
+            coco_dataset (torchvision.datasets.CocoDetection): COCO dataset object.
+            json_file (str): Path to the JSON file containing positive and negative examples for creating triplets.
         """
-        super(TripletCOCOMiner, self).__init__(**kwargs)
-        self.margin = margin
+        self.coco_dataset = coco_dataset
+        self.json_file = json_file
+        with open(json_file, 'r') as f:
+            self.retrieval_annotations = json.load(f)
+        self.subset = subset
+        self.similarity_matrix = self.similarity_matrix()
+        self.k = k
 
-    def mine(self, embeddings, labels, ref_emb, ref_labels):
-        """
-        Mines hard triplets from the given embeddings and labels.
+    def __len__(self):
+        return len(self.coco_dataset)
 
-        Args:
-            embeddings (torch.Tensor): Embeddings of anchor images.
-            labels (torch.Tensor): Labels of anchor images.
-            ref_emb (torch.Tensor): Embeddings of reference images.
-            ref_labels (torch.Tensor): Labels of reference images.
+    @staticmethod
+    def histograms_intersection(hist1, hist2):
+        return np.sum(np.minimum(hist1, hist2))
 
-        Returns:
-            tuple: A tuple of anchor, positive, and negative indices for hard triplets.
-        """
-        mat = self.distance(embeddings, ref_emb)
-        a, p, n = lmu.get_all_triplets_indices(labels, ref_labels)
-        pos_pairs = mat[a, p]
-        neg_pairs = mat[a, n]
-        triplet_margin = pos_pairs - neg_pairs if self.distance.is_inverted else neg_pairs - pos_pairs
-        triplet_mask = triplet_margin <= self.margin
-        return a[triplet_mask], p[triplet_mask], n[triplet_mask]
+    def similarity_matrix(self):
+        histograms = self.get_all_histograms()
+        return np.array([[self.histograms_intersection(histograms[i], histograms[j])
+                          for j in range(len(self.coco_dataset))] for i in range(len(self.coco_dataset))])
 
-    def get_labels(self, idx):
-        """
-        Returns the labels corresponding to the given indices.
+    def get_histogram(self, img_id, num_cats=90):
+        return np.bincount([self.coco_dataset.coco.loadAnns(ann_id)[0]['category_id'] for ann_id in
+                            self.coco_dataset.coco.getAnnIds(imgIds=img_id)], minlength=num_cats)
 
-        Args:
-            idx (numpy.ndarray): Array of indices.
+    def get_all_histograms(self):
+        return [self.get_histogram(img_id) for img_id in self.coco_dataset.ids]
 
-        Returns:
-            numpy.ndarray: Array of labels corresponding to the given indices.
-        """
-        return np.array([self.data_source.coco_dataset.coco.loadAnns(self.data_source.coco_dataset.coco.getAnnIds(imgIds=self.data_source.coco_dataset.ids[i]))[0]['category_id'] for i in idx])
+    def __getitem__(self, idx):
+        anchor_img, _ = self.coco_dataset[idx]
 
+        chose = random.randint(1, self.k)
+        images_ids = sorted(range(len(self.coco_dataset)), key=lambda i: self.similarity_matrix[idx][i])
+        positive_img, _ = self.coco_dataset[images_ids[chose]]
+        negative_img, _ = self.coco_dataset[images_ids[-1]]
 
-
-# class CocoDataset(Dataset):
-#     """PyTorch dataset for COCO annotations."""
-#
-#     def __init__(self, data_dir, transforms=None):
-#         """Load COCO annotation data."""
-#         self.data_dir = Path(data_dir)
-#         self.transforms = transforms
-#
-#         # load the COCO annotations json
-#         anno_file_path = self.data_dir/f'../instances_{os.path.basename(self.data_dir)}.json'
-#         with open(str(anno_file_path)) as file_obj:
-#             self.coco_data = json.load(file_obj)
-#         # put all of the annos into a dict where keys are image IDs to speed up retrieval
-#         self.image_id_to_annos = defaultdict(list)
-#         for anno in self.coco_data['annotations']:
-#             image_id = anno['image_id']
-#             self.image_id_to_annos[image_id] += [anno]
-#
-#     def __len__(self):
-#         return len(self.coco_data['images'])
-#
-#     def __getitem__(self, index):
-#         """Return tuple of image and labels as torch tensors."""
-#         image_data = self.coco_data['images'][index]
-#         image_id = image_data['id']
-#         if image_id == 71:
-#             print('debug')
-#         image_path = self.data_dir/image_data['file_name']
-#         image = Image.open(image_path)
-#
-#         annos = self.image_id_to_annos[image_id]
-#         anno_data = {
-#             'boxes': [],
-#             'labels': [],
-#             'area': [],
-#             'iscrowd': [],
-#         }
-#         for anno in annos:
-#             coco_bbox = anno['bbox']
-#             left = coco_bbox[0]
-#             top = coco_bbox[1]
-#             right = coco_bbox[0] + coco_bbox[2]
-#             bottom = coco_bbox[1] + coco_bbox[3]
-#             area = coco_bbox[2] * coco_bbox[3]
-#             anno_data['boxes'].append([left, top, right, bottom])
-#             anno_data['labels'].append(anno['category_id'])
-#             anno_data['area'].append(area)
-#             anno_data['iscrowd'].append(anno['iscrowd'])
-#
-#         target = {
-#             'boxes': torch.as_tensor(anno_data['boxes'], dtype=torch.float32),
-#             'labels': torch.as_tensor(anno_data['labels'], dtype=torch.int64),
-#             'image_id': torch.tensor([image_id]),  # pylint: disable=not-callable (false alarm)
-#             'area': torch.as_tensor(anno_data['area'], dtype=torch.float32),
-#             'iscrowd': torch.as_tensor(anno_data['iscrowd'], dtype=torch.int64),
-#         }
-#
-#         width, height = image.size
-#
-#         if self.transforms is not None:
-#             image = self.transforms(image)
-#
-#             target['boxes'][:, 0::2] /= width
-#             target['boxes'][:, 1::2] /= height
-#
-#         return image, target
+        return anchor_img, positive_img, negative_img, []

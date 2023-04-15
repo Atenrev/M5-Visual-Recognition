@@ -17,6 +17,7 @@ from src.models.resnet import ResNetWithEmbedder
 from src.utils import get_configuration
 from src.datasets.coco import create_coco_dataloader
 from src.datasets.coco import TripletCOCO
+from src.datasets.coco import TripletHistogramsCOCO
 
 import torch.optim as optim
 import torch.nn as nn
@@ -199,7 +200,7 @@ def main(args: argparse.Namespace):
     logging.info(f"Val dataset size: {len(val_ds)}")
 
     # Triplet COCO dataset
-    train_dataset = TripletCOCO(
+    train_dataset = TripletHistogramsCOCO(
         coco_dataset=train_ds,
         subset="train",
         json_file=os.path.join(args.dataset_path, args.retrieval_file),
@@ -207,6 +208,8 @@ def main(args: argparse.Namespace):
     # val_dataset = TripletCOCO(val_ds)
 
     train_dataset.__getitem__(1)
+    logging.info(f"Train dataset size: {len(train_dataset)}")
+    return
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
     # val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
