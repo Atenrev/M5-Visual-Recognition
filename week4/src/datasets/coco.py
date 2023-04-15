@@ -149,8 +149,7 @@ class TripletCOCO(Dataset):
             negative_img = self.transform(negative_img)
 
         # Return the triplet along with empty lists for target
-        # return (anchor_img, positive_img, negative_img), []
-        return anchor_img, positive_img, negative_img
+        return (anchor_img, positive_img, negative_img), []
 
     def __len__(self):
         """
