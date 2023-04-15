@@ -189,7 +189,8 @@ class TripletCOCO(Dataset):
     def __getitem__(self, idx):
         img, target = self.coco_dataset[idx]
         # If target has no annotations, randomly select a new image
-        while len(target['category_id']) == 0:
+        print(f"image: {idx}, id: {self.coco_dataset.ids[idx]}")
+        while 'category_id' not in target.keys():
             idx = random.choice(range(len(self.coco_dataset)))
             img, target = self.coco_dataset[idx]
 
