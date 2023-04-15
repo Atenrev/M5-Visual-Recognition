@@ -174,7 +174,7 @@ class TripletHistogramsCOCO(Dataset):
         return np.array([[self.histograms_intersection(histograms[i], histograms[j])
                           for j in range(len(self.coco_dataset))] for i in range(len(self.coco_dataset))])
 
-    def get_histogram(self, img_id, num_cats=90):
+    def get_histogram(self, img_id, num_cats=91):
         return np.bincount([self.coco_dataset.coco.loadAnns(ann_id)[0]['category_id'] for ann_id in
                             self.coco_dataset.coco.getAnnIds(imgIds=img_id)], minlength=num_cats)
 
