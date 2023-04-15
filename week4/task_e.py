@@ -3,7 +3,6 @@ import argparse
 import numpy as np
 import cv2
 import torch
-from pytorch_metric_learning import testers, samplers, losses, distances, trainers, miners
 import json
 from tqdm import tqdm
 
@@ -23,8 +22,8 @@ import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
+from torch.utils.tensorboard import SummaryWriter
 import logging
-
 
 
 def _parse_args() -> argparse.Namespace:
@@ -34,10 +33,11 @@ def _parse_args() -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(usage=usage_message)
 
+    # General configuration
     parser.add_argument("--seed", "-s", type=int, default=42,
                         help="Seed")
-    parser.add_argument("--output_dir", "-o", type=str, default="output",
-                        help="Output directory")
+    parser.add_argument('--output_path', type=str, default='./outputs_task_e',
+                        help='Path to the output directory.')
     # Dataset settings
     parser.add_argument('--dataset_path', type=str, default='../datasets/COCO',
                         help='Path to the dataset.')
@@ -65,7 +65,7 @@ def _parse_args() -> argparse.Namespace:
     # Training configuration
     parser.add_argument('--optimizer', type=str, default='adam',
                         help='Optimizer to use. Options: adam, sgd.')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='Number of epochs.')
     parser.add_argument('--batch_size', type=int, default=16,
                         help='Batch size.')
@@ -167,10 +167,24 @@ def main(args: argparse.Namespace):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
+    global OUTPUT_PATH, EXPERIMENT_NAME
+    os.makedirs(args.output_path, exist_ok=True)
+    OUTPUT_PATH = args.output_path
+    experiment_name = f"{args.model}_{args.dataset}_loss_{args.loss}_miner_{args.miner}_distance_{args.distance}"
+    EXPERIMENT_NAME = experiment_name
+    model_folder = os.path.join(args.output_path, "models", experiment_name)
+    os.makedirs(model_folder, exist_ok=True)
+    logs_folder = os.path.join(args.output_path, "logs", experiment_name)
+    os.makedirs(logs_folder, exist_ok=True)
+    tensorboard_folder = os.path.join(
+        args.output_path, "tensorboard", experiment_name)
+    os.makedirs(tensorboard_folder, exist_ok=True)
+
+    writer = SummaryWriter(log_dir=tensorboard_folder)
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     model = ResNetWithEmbedder(resnet='18', embed_size=args.embedding_size)
-
     model.to(device)
 
     # Dataset loading
@@ -197,13 +211,15 @@ def main(args: argparse.Namespace):
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
     # val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
 
-    epochs = 1
+    epochs = args.epochs
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     criterion = TripletLoss(margin=1.0)
 
     model.train()
+    loss_idx_value = 0
     for epoch in tqdm(range(epochs), desc="Epochs"):
         running_loss = []
+        current_loss = 0.0
         for step, (anchor_img, positive_img, negative_img, anchor_label) in enumerate(
                 tqdm(train_loader, desc="Training", leave=False)):
             anchor_img = anchor_img.to(device)
@@ -219,90 +235,27 @@ def main(args: argparse.Namespace):
             loss.backward()
             optimizer.step()
 
+            # Print statistics
+            writer.add_scalar("Loss/Minibatches", running_loss, loss_idx_value)
+            loss_idx_value += 1
+            if step % 500 == 499:
+                print('Loss after mini-batch %5d: %.3f' %
+                      (step + 1, current_loss / 500))
+                current_loss = 0.0
+
+                # Write loss for epoch
+            writer.add_scalar("Loss/Epochs", current_loss, epoch)
+
             running_loss.append(loss.cpu().detach().numpy())
         logging.info("Epoch: {}/{} - Loss: {:.4f}".format(epoch + 1, epochs, np.mean(running_loss)))
 
-    logging.info("Training finished")
-    return
+    logging.info("Training finished!")
 
-    # Loss configuration
-    # distance = distances.CosineSimilarity()
-    # criterion = losses.TripletMarginLoss(
-    #     margin=args.triplet_margin,
-    #     distance=distance,
-    # )
-
-    # miner = miners.TripletMarginMiner(
-    #     margin=args.miner_pos_margin,
-    #     type_of_triplets=args.miner_type_of_triplets,
-    # )
-
-    # Optimizer configuration
-    # trunk_optimizer = torch.optim.SGD(model.parameters(), lr=args.lr_trunk)
-    # embedder_optimizer = torch.optim.SGD(model.parameters(), lr=args.lr_embedder)
-
-    # Training
-    # trainer = trainers.MetricLossOnly(
-    #     models={"trunk": model.trunk, "embedder": model.embedder},
-    #     optimizers={"trunk_optimizer": trunk_optimizer,
-    #                 "embedder_optimizer": embedder_optimizer},
-    #     loss_funcs={"metric_loss": criterion},
-    #     mining_funcs={"tuple_miner": miner} if miner else None,
-    #     data_device=device,
-    #     dataset=train_dataset,
-    #     batch_size=args.batch_size,
-    #     sampler=class_sampler,
-    #     end_of_iteration_hook=hooks.end_of_iteration_hook,
-    #     end_of_epoch_hook=end_of_epoch_hook,
-    # )
-    # logging.info("Starting training")
-    # trainer.train(num_epochs=args.epochs)
-
-
-    # cfg = get_base_cfg(args)
-
-    # register_coco_dataset(cfg)
-
-    # train_data = load_coco_json(
-    #     json_file=args.train_instances,
-    #     image_root=args.train_images,
-    #     dataset_name=args.dataset,
-    # )
-
-
-
-    # register_coco_instances(
-    #     name=args.dataset + "_train",
-    #     metadata={},
-    #     json_file=args.train_instances,
-    #     image_root=args.train_images,
-    # )
-    # register_coco_instances(
-    #     name=args.dataset + "_val",
-    #     metadata={},
-    #     json_file=args.val_instances,
-    #     image_root=args.val_images,
-    # )
-    # from detectron2.data import DatasetCatalog
-    # metadata = MetadataCatalog.get(args.dataset + "_train")
-    # dataset_dicts = DatasetCatalog.get(args.dataset + "_train")
-    #
-    # img = cv2.imread(dataset_dicts[5]["file_name"])
-    #
-    # v = Visualizer(
-    #     img[:, :, ::-1],
-    #     metadata,
-    #     scale=1.2,
-    #     instance_mode=ColorMode.SEGMENTATION,
-    # )
-    # v = v.draw_dataset_dict(dataset_dicts[5])
-    # drawings = v.get_image()[:, :, ::-1]
-    #
-    #
-    # run_model_on_images(
-    #     cfg,
-    #     "/Users/Alex/MacBook Pro/MSc in CV/M5 - Visual Recognition/M5-Visual-Recognition/datasets/COCO/train2014",
-    # )
+    # Save model
+    os.makedirs('./models', exist_ok=True)
+    torch.save(model.state_dict(), os.path.join(
+        model_folder, f'model_final.pth'))
+    logging.info(f"Model saved at {model_folder}")
 
 
 if __name__ == "__main__":
