@@ -200,11 +200,7 @@ def main(args: argparse.Namespace):
     logging.info(f"Val dataset size: {len(val_ds)}")
 
     # Triplet COCO dataset
-    train_dataset = TripletHistogramsCOCO(
-        coco_dataset=train_ds,
-        subset="train",
-        json_file=os.path.join(args.dataset_path, args.retrieval_file),
-    )
+    train_dataset = TripletHistogramsCOCO(coco_dataset=train_ds, k=1)
     # val_dataset = TripletCOCO(val_ds)
 
     train_dataset.__getitem__(1)
