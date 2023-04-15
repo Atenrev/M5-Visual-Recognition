@@ -185,8 +185,8 @@ def main(args: argparse.Namespace):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # model = ResNetWithEmbedder(resnet='18', embed_size=args.embedding_size)
-    # model.to(device)
+    model = ResNetWithEmbedder(resnet='18', embed_size=args.embedding_size)
+    model.to(device)
 
     # Dataset loading
     dataset_config = get_configuration(args.dataset_config_path)
@@ -210,7 +210,6 @@ def main(args: argparse.Namespace):
 
     train_dataset.__getitem__(1)
     logging.info(f"Train dataset size: {len(train_dataset)}")
-    return
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
     # val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
