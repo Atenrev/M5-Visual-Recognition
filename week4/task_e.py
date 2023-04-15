@@ -170,7 +170,7 @@ def main(args: argparse.Namespace):
     global OUTPUT_PATH, EXPERIMENT_NAME
     os.makedirs(args.output_path, exist_ok=True)
     OUTPUT_PATH = args.output_path
-    experiment_name = f"{args.model}_{args.dataset}_loss_{args.loss}_miner_{args.miner}_distance_{args.distance}"
+    experiment_name = f"ResNet_COCO_emb_{args.embedding_size}_bs_{args.batch_size}_ep_{args.epochs}"
     EXPERIMENT_NAME = experiment_name
     model_folder = os.path.join(args.output_path, "models", experiment_name)
     os.makedirs(model_folder, exist_ok=True)
