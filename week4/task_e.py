@@ -171,7 +171,7 @@ def main(args: argparse.Namespace):
     global OUTPUT_PATH, EXPERIMENT_NAME
     os.makedirs(args.output_path, exist_ok=True)
     OUTPUT_PATH = args.output_path
-    experiment_name = f"ResNet_COCO_emb_{args.embedding_size}_bs_{args.batch_size}_ep_{args.epochs}"
+    experiment_name = f"ResNet_COCO_emb_{args.embedding_size}_bs_{args.batch_size}_ep_{args.epochs}_2ndTRY"
     EXPERIMENT_NAME = experiment_name
     model_folder = os.path.join(args.output_path, "models", experiment_name)
     os.makedirs(model_folder, exist_ok=True)
@@ -200,7 +200,12 @@ def main(args: argparse.Namespace):
     logging.info(f"Val dataset size: {len(val_ds)}")
 
     # Triplet COCO dataset
-    train_dataset = TripletHistogramsCOCO(coco_dataset=train_ds, k=1)
+    # train_dataset = TripletHistogramsCOCO(coco_dataset=train_ds, k=1)
+    train_dataset = TripletCOCO(
+        coco_dataset=train_ds,
+        json_file=os.path.join(args.dataset_path, args.retrieval_file),
+        subset="train",
+    )
     # val_dataset = TripletCOCO(val_ds)
 
     train_dataset.__getitem__(1)
