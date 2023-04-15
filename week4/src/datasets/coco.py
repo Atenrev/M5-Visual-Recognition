@@ -128,6 +128,7 @@ class TripletCOCO(Dataset):
         anchor_img, _ = self.coco_dataset[index]
 
         # Get the category of the anchor image
+        print(f"image: {index}, id: {self.coco_dataset.ids[index]}")
         anchor_ann_id = self.coco_dataset.coco.getAnnIds(imgIds=self.coco_dataset.ids[index])
         anchor_category = self.coco_dataset.coco.loadAnns(anchor_ann_id)[0]['category_id']
 
@@ -149,7 +150,7 @@ class TripletCOCO(Dataset):
             negative_img = self.transform(negative_img)
 
         # Return the triplet along with empty lists for target
-        return (anchor_img, positive_img, negative_img), []
+        return anchor_img, positive_img, negative_img, []
 
     def __len__(self):
         """
