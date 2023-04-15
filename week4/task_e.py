@@ -185,8 +185,8 @@ def main(args: argparse.Namespace):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    model = ResNetWithEmbedder(resnet='18', embed_size=args.embedding_size)
-    model.to(device)
+    # model = ResNetWithEmbedder(resnet='18', embed_size=args.embedding_size)
+    # model.to(device)
 
     # Dataset loading
     dataset_config = get_configuration(args.dataset_config_path)
