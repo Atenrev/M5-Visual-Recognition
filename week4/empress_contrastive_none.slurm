@@ -14,5 +14,5 @@ python task_b.py \
     --dataset_path "/home/mcv/datasets/MIT_split/" \
 	--model resnet_18 \
     --embedding_size 256 \
-	--batch_size 32 \
+	--batch_size 64 \
     --epochs 20

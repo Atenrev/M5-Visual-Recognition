@@ -6,9 +6,9 @@
 #SBATCH -o logs/%x_%u_%j.out # File to which STDOUT will be written
 #SBATCH -e logs/%x_%u_%j.err # File to which STDERR will be written
 python task_b.py \
-    --loss "ntxent" \
+    --loss "triplet"  \
     --miner "MultiSimilarity" \
-	--output_path "outputs_task_b/" \
+	--output_path "outputs_task_c/" \
     --dataset "mit_split" \
     --dataset_config_path "./configs/mit_split.yaml" \
     --dataset_path "/home/mcv/datasets/MIT_split/" \

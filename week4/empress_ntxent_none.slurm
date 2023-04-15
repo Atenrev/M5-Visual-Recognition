@@ -6,7 +6,7 @@
 #SBATCH -o logs/%x_%u_%j.out # File to which STDOUT will be written
 #SBATCH -e logs/%x_%u_%j.err # File to which STDERR will be written
 python task_b.py \
-    --loss "ntxent"
+    --loss "ntxent" \
     --miner None \
 	--output_path "outputs_task_b/" \
     --dataset "mit_split" \
@@ -14,5 +14,5 @@ python task_b.py \
     --dataset_path "/home/mcv/datasets/MIT_split/" \
 	--model resnet_18 \
     --embedding_size 256 \
-	--batch_size 32 \
+	--batch_size 64 \
     --epochs 20
