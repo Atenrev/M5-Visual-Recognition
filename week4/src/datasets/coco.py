@@ -151,17 +151,13 @@ class TripletHistogramsCOCO(Dataset):
     Custom dataset class for creating triplets from COCO dataset for image retrieval task with Faster R-CNN or Mask R-CNN.
     """
 
-    def __init__(self, coco_dataset, json_file, subset, k=1):
+    def __init__(self, coco_dataset, k=1):
         """
         Args:
             coco_dataset (torchvision.datasets.CocoDetection): COCO dataset object.
-            json_file (str): Path to the JSON file containing positive and negative examples for creating triplets.
+            k (int): Number of objects to consider for a positive example.
         """
         self.coco_dataset = coco_dataset
-        self.json_file = json_file
-        with open(json_file, 'r') as f:
-            self.retrieval_annotations = json.load(f)
-        self.subset = subset
         self.similarity_matrix = self.similarity_matrix()
         self.k = k
 
