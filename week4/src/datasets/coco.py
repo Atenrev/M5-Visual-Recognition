@@ -199,9 +199,8 @@ class TripletCOCO(Dataset):
         positive_ids = self.retrieval_annotations[self.subset][str(category_id)]
 
         # Select positive example
-        positive_id = img_id
-        while positive_id == img_id:
-            positive_id = random.choice(positive_ids)
+        positive_ids.remove(img_id)
+        positive_id = random.choice(positive_ids)
         positive_index = self.coco_dataset.ids.index(positive_id)
         positive_img, _ = self.coco_dataset[positive_index]
 
