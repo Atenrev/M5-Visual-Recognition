@@ -92,11 +92,11 @@ def __parse_args() -> argparse.Namespace:
                         help='Number of epochs.')
     parser.add_argument('--batch_size', type=int, default=16,
                         help='Batch size.')
-    parser.add_argument('--lr_trunk', type=float, default=1e-5,
+    parser.add_argument('--lr_trunk', type=float, default=1e-3,
                         help='Learning rate for the trunk.')
-    parser.add_argument('--lr_embedder', type=float, default=1e-4,
+    parser.add_argument('--lr_embedder', type=float, default=1e-2,
                         help='Learning rate for the embedder.')
-    parser.add_argument('--weight_decay', type=float, default=1e-4,
+    parser.add_argument('--weight_decay', type=float, default=1e-2,
                         help='Weight decay.')
 
     args = parser.parse_args()
