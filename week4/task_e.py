@@ -216,10 +216,8 @@ def main(args: argparse.Namespace):
     criterion = TripletLoss(margin=1.0)
 
     model.train()
-    loss_idx_value = 0
     for epoch in tqdm(range(epochs), desc="Epochs"):
         running_loss = []
-        current_loss = 0.0
         for step, (anchor_img, positive_img, negative_img, anchor_label) in enumerate(
                 tqdm(train_loader, desc="Training", leave=False)):
             anchor_img = anchor_img.to(device)
@@ -235,16 +233,8 @@ def main(args: argparse.Namespace):
             loss.backward()
             optimizer.step()
 
-            # Print statistics
-            writer.add_scalar("Loss/Minibatches", running_loss, loss_idx_value)
-            loss_idx_value += 1
-            if step % 500 == 499:
-                print('Loss after mini-batch %5d: %.3f' %
-                      (step + 1, current_loss / 500))
-                current_loss = 0.0
-
-                # Write loss for epoch
-            writer.add_scalar("Loss/Epochs", current_loss, epoch)
+            # Write loss for epoch
+            writer.add_scalar("Loss/Epochs", loss, epoch)
 
             running_loss.append(loss.cpu().detach().numpy())
         logging.info("Epoch: {}/{} - Loss: {:.4f}".format(epoch + 1, epochs, np.mean(running_loss)))
