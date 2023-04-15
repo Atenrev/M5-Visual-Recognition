@@ -1,4 +1,5 @@
 import csv
+import random
 import os
 import imageio
 import glob
@@ -43,6 +44,8 @@ def __parse_args() -> argparse.Namespace:
     # General configuration
     parser.add_argument('--output_path', type=str, default='./outputs',
                         help='Path to the output directory.')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='Seed for the experiment.')
     # Dataset configuration
     parser.add_argument('--dataset', type=str, default='mit_split',
                         help='Dataset to use. Options: mit_split, coco.')
@@ -92,11 +95,11 @@ def __parse_args() -> argparse.Namespace:
                         help='Number of epochs.')
     parser.add_argument('--batch_size', type=int, default=16,
                         help='Batch size.')
-    parser.add_argument('--lr_trunk', type=float, default=1e-3,
+    parser.add_argument('--lr_trunk', type=float, default=1e-5,
                         help='Learning rate for the trunk.')
-    parser.add_argument('--lr_embedder', type=float, default=1e-2,
+    parser.add_argument('--lr_embedder', type=float, default=1e-4,
                         help='Learning rate for the embedder.')
-    parser.add_argument('--weight_decay', type=float, default=1e-2,
+    parser.add_argument('--weight_decay', type=float, default=1e-4,
                         help='Weight decay.')
 
     args = parser.parse_args()
@@ -249,6 +252,11 @@ def visualizer_hook(visualizer, embeddings, labels, split_name, keyname, epoch, 
 
 
 def main(args: argparse.Namespace):
+    # Set seeds
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+    
     global OUTPUT_PATH, EXPERIMENT_NAME
     os.makedirs(args.output_path, exist_ok=True)
     OUTPUT_PATH = args.output_path
