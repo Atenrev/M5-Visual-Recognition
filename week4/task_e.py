@@ -239,11 +239,10 @@ def main(args: argparse.Namespace):
             running_loss.append(loss.cpu().detach().numpy())
         logging.info("Epoch: {}/{} - Loss: {:.4f}".format(epoch + 1, epochs, np.mean(running_loss)))
 
-        # Save model every 5 epochs
-        if (epoch + 1) % 5 == 0:
-            torch.save(model.state_dict(), os.path.join(
-                model_folder, f'model_{epoch + 1}.pth'))
-            logging.info(f"Model saved at {model_folder}")
+        # Save model every epoch
+        torch.save(model.state_dict(), os.path.join(
+            model_folder, f'model_{epoch}.pth'))
+        logging.info(f"Model saved at {model_folder}")
 
     logging.info("Training finished!")
 
