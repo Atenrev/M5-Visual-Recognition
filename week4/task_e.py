@@ -43,6 +43,8 @@ def _parse_args() -> argparse.Namespace:
                         help='Path to the dataset.')
     parser.add_argument('--dataset_config_path', type=str, default='./configs/coco.yaml',
                         help='Path to the dataset config file.')
+    parser.add_argument('--retrieval_file', type=str, default='../datasets/COCO/mcv_image_retrieval_annotations.json',
+                        help='Path to the retrieval file.')
     # parser.add_argument("--train_instances", "-ta", type=str, default="../datasets/COCO/instances_train2014.json",
     #                     help="Path to COCO train instances file in JSON format")
     # parser.add_argument("--val_instances", "-va", type=str, default="../datasets/COCO/instances_val2014.json",
@@ -186,7 +188,7 @@ def main(args: argparse.Namespace):
     train_dataset = TripletCOCO(
         coco_dataset=train_ds,
         subset="train",
-        json_file="/Users/Alex/MacBook Pro/MSc in CV/M5 - Visual Recognition/M5-Visual-Recognition/datasets/COCO/mcv_image_retrieval_annotations.json"
+        json_file=args.retrieval_file
     )
     # val_dataset = TripletCOCO(val_ds)
 
