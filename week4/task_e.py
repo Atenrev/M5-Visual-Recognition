@@ -183,8 +183,14 @@ def main(args: argparse.Namespace):
     logging.info(f"Val dataset size: {len(val_ds)}")
 
     # Triplet COCO dataset
-    train_dataset = TripletCOCO(train_ds)
+    train_dataset = TripletCOCO(
+        coco_dataset=train_ds,
+        subset="train",
+        json_file="/Users/Alex/MacBook Pro/MSc in CV/M5 - Visual Recognition/M5-Visual-Recognition/datasets/COCO/mcv_image_retrieval_annotations.json"
+    )
     # val_dataset = TripletCOCO(val_ds)
+
+    train_dataset.__getitem__(1)
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
     # val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)

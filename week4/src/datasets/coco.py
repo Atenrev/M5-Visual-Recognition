@@ -1,5 +1,7 @@
 import os
 import numpy as np
+import json
+import random
 
 import torch
 from torch.utils.data import DataLoader
@@ -81,7 +83,7 @@ def create_coco_dataloader(
     return train_dataloader, test_dataloader
 
 
-class TripletCOCO(Dataset):
+class TripletDatasetCOCO(Dataset):
     """
     Custom Dataset class for generating triplets from COCO dataset for image retrieval task with Faster R-CNN or Mask R-CNN.
     """
@@ -94,17 +96,17 @@ class TripletCOCO(Dataset):
         """
         self.coco_dataset = coco_dataset
         self.transform = transform
+        self.ids = self.get_images_with_annotations()
         self.categories = self.get_categories()
+
+    def get_images_with_annotations(self):
+        return [id for id in self.coco_dataset.ids if self.coco_dataset.coco.getAnnIds(imgIds=id)]
+        # return [len(self.coco_dataset.coco.getAnnIds(imgIds=id)) > 0 for id in self.coco_dataset.ids]
 
     def get_categories(self):
         categories = []
         for i in range(len(self.coco_dataset)):
             ann_ids = self.coco_dataset.coco.getAnnIds(imgIds=self.coco_dataset.ids[i])
-
-            # if not ann_ids:
-            #     print(f"ann_ids is int: {ann_ids}, image id: {self.coco_dataset.ids[i]} number: {i}")
-            #     break
-
             if len(ann_ids) > 0:
                 ann_ids = ann_ids[0]
                 # Need to access 0 because loadAnns always returns a list!
@@ -128,18 +130,20 @@ class TripletCOCO(Dataset):
         anchor_img, _ = self.coco_dataset[index]
 
         # Get the category of the anchor image
-        print(f"image: {index}, id: {self.coco_dataset.ids[index]}")
-        anchor_ann_id = self.coco_dataset.coco.getAnnIds(imgIds=self.coco_dataset.ids[index])
+        print(f"image: {index}, id: {self.coco_dataset.ids[index]}, correct_id: {self.ids[index]}")
+        anchor_ann_id = self.coco_dataset.coco.getAnnIds(imgIds=self.ids[index])[0]  # select only the 1st annotation!
         anchor_category = self.coco_dataset.coco.loadAnns(anchor_ann_id)[0]['category_id']
 
         # Find positive sample (image containing the same category as anchor)
-        positive_indices = np.where((np.asarray(self.coco_dataset.ids) != index) &
+        positive_indices = np.where((np.asarray(self.ids) != self.ids[index]) &
                                     (np.asarray(self.categories) == anchor_category))[0]
         positive_index = np.random.choice(positive_indices)
         positive_img, _ = self.coco_dataset[positive_index]
 
         # Find negative sample (image containing a different category than anchor)
-        negative_indices = np.where(np.asarray(self.categories) != anchor_category)[0]
+        negative_indices = np.where((np.asarray(self.ids) != self.ids[index]) &
+                                    (np.asarray(self.ids) != self.ids[index]) &
+                                    (np.asarray(self.categories) != anchor_category))[0]
         negative_index = np.random.choice(negative_indices)
         negative_img, _ = self.coco_dataset[negative_index]
 
@@ -160,6 +164,71 @@ class TripletCOCO(Dataset):
             int: Number of samples in the dataset.
         """
         return len(self.coco_dataset)
+
+
+class TripletCOCO(Dataset):
+    """
+    Custom dataset class for creating triplets from COCO dataset for image retrieval task with Faster R-CNN or Mask R-CNN.
+    """
+
+    def __init__(self, coco_dataset, json_file, subset):
+        """
+        Args:
+            coco_dataset (torchvision.datasets.CocoDetection): COCO dataset object.
+            json_file (str): Path to the JSON file containing positive and negative examples for creating triplets.
+        """
+        self.coco_dataset = coco_dataset
+        self.json_file = json_file
+        with open(json_file, 'r') as f:
+            self.retrieval_annotations = json.load(f)
+        self.subset = subset
+
+    def __len__(self):
+        return len(self.coco_dataset)
+
+    def __getitem__(self, idx):
+        img, target = self.coco_dataset[idx]
+        # If target has no annotations, randomly select a new image
+        while len(target['category_id']) == 0:
+            idx = random.choice(range(len(self.coco_dataset)))
+            img, target = self.coco_dataset[idx]
+
+        # Take the category of the first annotation
+        category_id = target['category_id'][0]
+        img_id = target['image_id']
+        positive_ids = self.retrieval_annotations[self.subset][str(category_id)]
+
+        # Select positive example
+        positive_id = img_id
+        while positive_id == img_id:
+            positive_id = random.choice(positive_ids)
+        positive_index = self.coco_dataset.ids.index(positive_id)
+        positive_img, _ = self.coco_dataset[positive_index]
+
+        # Select negative example
+        # Crate a list of all categories except the current category
+        negative_categories = list(self.retrieval_annotations[self.subset].keys())
+        negative_categories.remove(str(category_id))
+        negative_cat = random.choice(negative_categories)
+        # Select a random image from the selected category
+        negative_id = random.choice(self.retrieval_annotations[self.subset][negative_cat])
+        negative_index = self.coco_dataset.ids.index(negative_id)
+        negative_img, _ = self.coco_dataset[negative_index]
+
+        return img, positive_img, negative_img, []
+
+    def get_labels(self, idx):
+        """
+        Returns the category labels corresponding to the given indices.
+
+        Args:
+            idx (numpy.ndarray): Array of indices.
+
+        Returns:
+            numpy.ndarray: Array of category labels corresponding to the given indices.
+        """
+        return np.array([self.coco_dataset.coco.loadAnns(self.coco_dataset.coco.getAnnIds(imgIds=self.coco_dataset.ids[i]))[0]['category_id'] for i in idx])
+
 
 
 class TripletCOCOMiner(BaseMiner):
