@@ -173,6 +173,7 @@ class TripletHistogramsCOCO(Dataset):
         return np.sum(np.minimum(hist1, hist2))
 
     def similarity_matrix(self):
+        print('Calculating similarity matrix...')
         histograms = self.get_all_histograms()
         return np.array([[self.histograms_intersection(histograms[i], histograms[j])
                           for j in range(len(self.coco_dataset))] for i in range(len(self.coco_dataset))])
@@ -182,6 +183,7 @@ class TripletHistogramsCOCO(Dataset):
                             self.coco_dataset.coco.getAnnIds(imgIds=img_id)], minlength=num_cats)
 
     def get_all_histograms(self):
+        print('Calculating histograms...')
         return [self.get_histogram(img_id) for img_id in self.coco_dataset.ids]
 
     def __getitem__(self, idx):
