@@ -11,6 +11,8 @@ from torchvision import datasets
 
 from typing import Any
 
+from pytorch_metric_learning.miners import BaseMiner
+from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
 
 # from collections import defaultdict
 # from pathlib import Path
@@ -147,7 +149,8 @@ class TripletCOCO(Dataset):
             negative_img = self.transform(negative_img)
 
         # Return the triplet along with empty lists for target
-        return (anchor_img, positive_img, negative_img), []
+        # return (anchor_img, positive_img, negative_img), []
+        return anchor_img, positive_img, negative_img
 
     def __len__(self):
         """
@@ -157,6 +160,55 @@ class TripletCOCO(Dataset):
             int: Number of samples in the dataset.
         """
         return len(self.coco_dataset)
+
+
+class TripletCOCOMiner(BaseMiner):
+    """
+    Custom Triplet Miner class for mining triplets from COCO dataset for image retrieval task with Faster R-CNN or Mask R-CNN.
+    """
+
+    def __init__(self, margin=0.1, **kwargs):
+        """
+        Args:
+            margin (float, optional): Margin value for triplet mining. Default is 0.1.
+            **kwargs: Additional keyword arguments to be passed to the parent class (BaseMiner).
+        """
+        super(TripletCOCOMiner, self).__init__(**kwargs)
+        self.margin = margin
+
+    def mine(self, embeddings, labels, ref_emb, ref_labels):
+        """
+        Mines hard triplets from the given embeddings and labels.
+
+        Args:
+            embeddings (torch.Tensor): Embeddings of anchor images.
+            labels (torch.Tensor): Labels of anchor images.
+            ref_emb (torch.Tensor): Embeddings of reference images.
+            ref_labels (torch.Tensor): Labels of reference images.
+
+        Returns:
+            tuple: A tuple of anchor, positive, and negative indices for hard triplets.
+        """
+        mat = self.distance(embeddings, ref_emb)
+        a, p, n = lmu.get_all_triplets_indices(labels, ref_labels)
+        pos_pairs = mat[a, p]
+        neg_pairs = mat[a, n]
+        triplet_margin = pos_pairs - neg_pairs if self.distance.is_inverted else neg_pairs - pos_pairs
+        triplet_mask = triplet_margin <= self.margin
+        return a[triplet_mask], p[triplet_mask], n[triplet_mask]
+
+    def get_labels(self, idx):
+        """
+        Returns the labels corresponding to the given indices.
+
+        Args:
+            idx (numpy.ndarray): Array of indices.
+
+        Returns:
+            numpy.ndarray: Array of labels corresponding to the given indices.
+        """
+        return np.array([self.data_source.coco_dataset.coco.loadAnns(self.data_source.coco_dataset.coco.getAnnIds(imgIds=self.data_source.coco_dataset.ids[i]))[0]['category_id'] for i in idx])
+
 
 
 # class CocoDataset(Dataset):

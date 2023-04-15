@@ -19,6 +19,10 @@ from src.utils import get_configuration
 from src.datasets.coco import create_coco_dataloader
 from src.datasets.coco import TripletCOCO
 
+import torch.optim as optim
+import torch.nn as nn
+from torch.utils.data import DataLoader
+
 import logging
 
 
@@ -140,6 +144,22 @@ def get_base_cfg(args):
     return cfg
 
 
+class TripletLoss(nn.Module):
+    def __init__(self, margin=1.0):
+        super(TripletLoss, self).__init__()
+        self.margin = margin
+
+    def calc_euclidean(self, x1, x2):
+        return (x1 - x2).pow(2).sum(1)
+
+    def forward(self, anchor: torch.Tensor, positive: torch.Tensor, negative: torch.Tensor) -> torch.Tensor:
+        distance_positive = self.calc_euclidean(anchor, positive)
+        distance_negative = self.calc_euclidean(anchor, negative)
+        losses = torch.relu(distance_positive - distance_negative + self.margin)
+
+        return losses.mean()
+
+
 def main(args: argparse.Namespace):
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
     np.random.seed(args.seed)
@@ -166,38 +186,69 @@ def main(args: argparse.Namespace):
     train_dataset = TripletCOCO(train_ds)
     # val_dataset = TripletCOCO(val_ds)
 
-    # Loss configuration
-    distance = distances.CosineSimilarity()
-    criterion = losses.TripletMarginLoss(
-        margin=args.triplet_margin,
-        distance=distance,
-    )
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
+    # val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
 
-    miner = miners.TripletMarginMiner(
-        margin=args.miner_pos_margin,
-        type_of_triplets=args.miner_type_of_triplets,
-    )
+    epochs = 50
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    criterion = TripletLoss(margin=1.0)
+
+    model.train()
+    for epoch in tqdm(range(epochs), desc="Epochs"):
+        running_loss = []
+        for step, (anchor_img, positive_img, negative_img, anchor_label) in enumerate(
+                tqdm(train_loader, desc="Training", leave=False)):
+            anchor_img = anchor_img.to(device)
+            positive_img = positive_img.to(device)
+            negative_img = negative_img.to(device)
+
+            optimizer.zero_grad()
+            anchor_out = model(anchor_img)
+            positive_out = model(positive_img)
+            negative_out = model(negative_img)
+
+            loss = criterion(anchor_out, positive_out, negative_out)
+            loss.backward()
+            optimizer.step()
+
+            running_loss.append(loss.cpu().detach().numpy())
+        logging.info("Epoch: {}/{} - Loss: {:.4f}".format(epoch + 1, epochs, np.mean(running_loss)))
+
+    logging.info("Training finished")
+    return
+
+    # Loss configuration
+    # distance = distances.CosineSimilarity()
+    # criterion = losses.TripletMarginLoss(
+    #     margin=args.triplet_margin,
+    #     distance=distance,
+    # )
+
+    # miner = miners.TripletMarginMiner(
+    #     margin=args.miner_pos_margin,
+    #     type_of_triplets=args.miner_type_of_triplets,
+    # )
 
     # Optimizer configuration
-    trunk_optimizer = torch.optim.SGD(model.parameters(), lr=args.lr_trunk)
-    embedder_optimizer = torch.optim.SGD(model.parameters(), lr=args.lr_embedder)
+    # trunk_optimizer = torch.optim.SGD(model.parameters(), lr=args.lr_trunk)
+    # embedder_optimizer = torch.optim.SGD(model.parameters(), lr=args.lr_embedder)
 
     # Training
-    trainer = trainers.MetricLossOnly(
-        models={"trunk": model.trunk, "embedder": model.embedder},
-        optimizers={"trunk_optimizer": trunk_optimizer,
-                    "embedder_optimizer": embedder_optimizer},
-        loss_funcs={"metric_loss": criterion},
-        mining_funcs={"tuple_miner": miner} if miner else None,
-        data_device=device,
-        dataset=train_dataset,
-        batch_size=args.batch_size,
-        # sampler=class_sampler,
-        # end_of_iteration_hook=hooks.end_of_iteration_hook,
-        # end_of_epoch_hook=end_of_epoch_hook,
-    )
-    logging.info("Starting training")
-    trainer.train(num_epochs=args.epochs)
+    # trainer = trainers.MetricLossOnly(
+    #     models={"trunk": model.trunk, "embedder": model.embedder},
+    #     optimizers={"trunk_optimizer": trunk_optimizer,
+    #                 "embedder_optimizer": embedder_optimizer},
+    #     loss_funcs={"metric_loss": criterion},
+    #     mining_funcs={"tuple_miner": miner} if miner else None,
+    #     data_device=device,
+    #     dataset=train_dataset,
+    #     batch_size=args.batch_size,
+    #     sampler=class_sampler,
+    #     end_of_iteration_hook=hooks.end_of_iteration_hook,
+    #     end_of_epoch_hook=end_of_epoch_hook,
+    # )
+    # logging.info("Starting training")
+    # trainer.train(num_epochs=args.epochs)
 
 
     # cfg = get_base_cfg(args)
