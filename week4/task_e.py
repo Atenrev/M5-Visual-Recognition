@@ -162,15 +162,9 @@ def main(args: argparse.Namespace):
     logging.info(f"Train dataset size: {len(train_ds)}")
     logging.info(f"Val dataset size: {len(val_ds)}")
 
-    # sample = train_ds[1]
-    # image, target = sample
-    # print(type(image))
-    # print(type(target), type(target[0]), list(target[0].keys()))
-
     # Triplet COCO dataset
     train_dataset = TripletCOCO(train_ds)
-
-    train_dataset.__getitem__(1)
+    # val_dataset = TripletCOCO(val_ds)
 
     # Loss configuration
     distance = distances.CosineSimilarity()
@@ -196,7 +190,7 @@ def main(args: argparse.Namespace):
         loss_funcs={"metric_loss": criterion},
         mining_funcs={"tuple_miner": miner} if miner else None,
         data_device=device,
-        dataset=train_ds,
+        dataset=train_dataset,
         batch_size=args.batch_size,
         # sampler=class_sampler,
         # end_of_iteration_hook=hooks.end_of_iteration_hook,
