@@ -18,8 +18,8 @@ from torch.utils.data import DataLoader
 
 from detectron2 import model_zoo
 from detectron2.config import get_cfg
-# from detectron2.engine import DefaultPredictor
-from detectron2.modeling import build_model
+from detectron2.engine import DefaultPredictor
+# from detectron2.modeling import build_model
 
 # from detectron2.utils.visualizer import Visualizer, ColorMode
 # from detectron2.data import MetadataCatalog
@@ -109,9 +109,9 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
 
     # Object Detection Model
     cfg = get_base_cfg(args)
-    # predictor = DefaultPredictor(cfg)
-    predictor = build_model(cfg)
-    predictor.eval()
+    predictor = DefaultPredictor(cfg)
+    # predictor = build_model(cfg)
+    # predictor.eval()
     # predictor.summary()
     num_cats = 91
 
@@ -130,9 +130,14 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
         print(f"Query shape: {query.shape}")
         # query = torch.unsqueeze(query, 0)
         print(f"Query shape: {query.shape}")
-        with torch.no_grad():
-            outputs = predictor([{"image": query}])
-        # outputs = predictor(query)
+        # with torch.no_grad():
+        #     outputs = predictor([{"image": query}])
+
+        query_arr = np.ndarray(query)
+        print(f"Query arr shape: {query_arr.shape}")
+        query_arr = np.squeeze(query_arr)
+        print(f"Query arr shape: {query_arr.shape}")
+        outputs = predictor(query_arr)
         print(f"Outputs: {outputs}")
 
         pred_classes = outputs['instances'].pred_classes.cpu().tolist()
