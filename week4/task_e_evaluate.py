@@ -95,6 +95,7 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
     # Annoyer
     annoy = Annoyer(model, database_dataloader, emb_size=embed_size,
                     device=device, distance='angular')
+    # TODO: Add experiment_name!
     try:
         annoy.load()
     except:
@@ -116,6 +117,7 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
 
     embeds = []
     for idx in tqdm(range(len(test_dataloader.dataset))):
+        print(idx)
         query, label_query = test_dataloader.dataset[idx]
 
         outputs = predictor(query)
