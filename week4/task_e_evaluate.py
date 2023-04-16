@@ -133,7 +133,7 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
         with torch.no_grad():
             outputs = predictor([{"image": query}])
         # outputs = predictor(query)
-        print(f"Outputs: {outputs.shape}")
+        print(f"Outputs: {outputs}")
 
         pred_classes = outputs['instances'].pred_classes.cpu().tolist()
         label_query_hist = np.bincount(pred_classes, minlength=num_cats)
