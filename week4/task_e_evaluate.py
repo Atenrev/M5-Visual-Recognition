@@ -110,9 +110,6 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
     # Object Detection Model
     cfg = get_base_cfg(args)
     predictor = DefaultPredictor(cfg)
-    # predictor = build_model(cfg)
-    # predictor.eval()
-    # predictor.summary()
     num_cats = 91
 
     # Metrics
@@ -123,24 +120,15 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
     top_10_acc = []
 
     embeds = []
-    for idx in tqdm(range(5)):
-    # for idx in tqdm(range(len(test_dataloader.dataset))):
-        print(f"Test dataloader idx: {idx}")
+    # for idx in tqdm(range(5)):
+    for idx in tqdm(range(len(test_dataloader.dataset))):
         query, label_query = test_dataloader.dataset[idx]
         query_img, _ = test_dataloader.dataset.__getitem__(idx, True)
 
-        print(f"Query shape: {query_img.shape}")
-        # query = torch.unsqueeze(query, 0)
-        print(f"Query shape: {query_img.shape}")
-        # with torch.no_grad():
-        #     outputs = predictor([{"image": query}])
-        # query_img = query.cpu().numpy()
-        # print(f"Query img shape: {query_img.shape}")
-        # query_img = np.moveaxis(query_img, 0, -1)
-        # print(f"Query img shape: {query_img.shape}")
+        # print(f"Query shape: {query_img.shape}")
 
         outputs = predictor(query_img)
-        print(f"Outputs: {outputs}")
+        # print(f"Outputs: {outputs}")
 
         pred_classes = outputs['instances'].pred_classes.cpu().tolist()
         label_query_hist = np.bincount(pred_classes, minlength=num_cats)
