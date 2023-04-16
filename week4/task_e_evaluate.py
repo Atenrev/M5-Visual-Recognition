@@ -133,10 +133,6 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
         # with torch.no_grad():
         #     outputs = predictor([{"image": query}])
 
-        query_arr = np.ndarray(query)
-        print(f"Query arr shape: {query_arr.shape}")
-        query_arr = np.squeeze(query_arr)
-        print(f"Query arr shape: {query_arr.shape}")
         outputs = predictor(query.cpu().numpy())
         print(f"Outputs: {outputs}")
 
