@@ -188,6 +188,7 @@ def main(args: argparse.Namespace):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = ResNetWithEmbedder(resnet='18', embed_size=args.embedding_size)
     model.load_state_dict(torch.load(args.model_path, map_location=device))
+    model.to(device)
     model.eval()
 
     run_experiment(
