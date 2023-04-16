@@ -13,6 +13,7 @@ import torchvision.transforms as transforms
 from torchvision import datasets
 
 from typing import Any
+import cv2
 
 from pytorch_metric_learning.miners import BaseMiner
 from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
@@ -236,18 +237,24 @@ class RetrievalCOCO(Dataset):
             ])
         return transform(image)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx, original=False):
         img_id = list(self.images_dict.keys())[idx]
         filename = self.coco_dataset.coco.loadImgs(img_id)[0]['file_name']
 
         image_path = os.path.join(self.coco_dataset.root, filename)
 
+        cats = [int(obj) for obj in self.images_dict[img_id]]
+
+        if original:
+            image_original = cv2.imread(image_path)
+
+            return image_original, cats
+
+
         image = np.array(Image.open(image_path).convert("RGB")).transpose(2, 0, 1)
         image = torch.tensor(image).float() / 255
 
         image = self.transforms(image)
-
-        cats = [int(obj) for obj in self.images_dict[img_id]]
 
         return image, cats
 

@@ -126,16 +126,17 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
     for idx in tqdm(range(len(test_dataloader.dataset))):
         print(f"Test dataloader idx: {idx}")
         query, label_query = test_dataloader.dataset[idx]
+        query_img, _ = test_dataloader.dataset.__getitem__(idx, True)
 
-        print(f"Query shape: {query.shape}")
+        print(f"Query shape: {query_img.shape}")
         # query = torch.unsqueeze(query, 0)
-        print(f"Query shape: {query.shape}")
+        print(f"Query shape: {query_img.shape}")
         # with torch.no_grad():
         #     outputs = predictor([{"image": query}])
-        query_img = query.cpu().numpy()
-        print(f"Query img shape: {query_img.shape}")
-        query_img = np.moveaxis(query_img, 0, -1)
-        print(f"Query img shape: {query_img.shape}")
+        # query_img = query.cpu().numpy()
+        # print(f"Query img shape: {query_img.shape}")
+        # query_img = np.moveaxis(query_img, 0, -1)
+        # print(f"Query img shape: {query_img.shape}")
 
         outputs = predictor(query_img)
         print(f"Outputs: {outputs}")
