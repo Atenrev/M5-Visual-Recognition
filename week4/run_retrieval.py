@@ -16,7 +16,7 @@ from src.utils import get_configuration
 from src.metrics import plot_prec_rec_curve_multiclass
 
 
-LABELS = ['coast', 'forest', 'highway', 'inside_city', 'mountain', 'Opencountry', 'street', 'tallbuilding']
+LABELS = ['Opencountry', 'coast', 'forest', 'highway', 'inside_city', 'mountain', 'street', 'tallbuilding']
 
 
 def __parse_args() -> argparse.Namespace:
