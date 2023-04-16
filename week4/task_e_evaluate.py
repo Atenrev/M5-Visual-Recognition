@@ -112,6 +112,7 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
     # predictor = DefaultPredictor(cfg)
     predictor = build_model(cfg)
     predictor.eval()
+    predictor.summary()
     num_cats = 91
 
     # Metrics
