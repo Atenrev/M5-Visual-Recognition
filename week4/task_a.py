@@ -145,7 +145,9 @@ def main(k = 50):
     train, test = create_mit_dataloader(
         1, '../datasets/MIT_split/', ProxyConfig(), inference=False)
 
-    model = ResNet(resnet='101').to(device)
+    model = VGG19(batchnorm=False).to(device)
+    # model = ResNet(resnet='101').to(device)
+
     # Works better with smaller emb_sizes però que li farem
     annoy = Annoyer(model, train, emb_size=2048, device=device, distance='angular')
     try: annoy.load()
