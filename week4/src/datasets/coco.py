@@ -16,6 +16,8 @@ from typing import Any
 from pytorch_metric_learning.miners import BaseMiner
 from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
 
+from PIL import Image
+
 # from collections import defaultdict
 # from pathlib import Path
 # import json
@@ -190,3 +192,44 @@ class TripletHistogramsCOCO(Dataset):
         negative_img, _ = self.coco_dataset[images_ids[-1]]
 
         return anchor_img, positive_img, negative_img, []
+
+
+class RetrievalCOCO(Dataset):
+    """
+    Custom dataset class for Image Retrieval task on COCO dataset with Faster R-CNN or Mask R-CNN object detector.
+    """
+    def __init__(self, coco_dataset, json_file, subset):
+        """
+        Args:
+            coco_dataset (torchvision.datasets.CocoDetection): COCO dataset object.
+            json_file (str): Path to the JSON file containing positive and negative examples for creating triplets.
+            subset (str): Subset of the COCO dataset to use. One of 'database', 'val', 'test'.
+        """
+        self.coco_dataset = coco_dataset
+        self.json_file = json_file
+        with open(json_file, 'r') as f:
+            self.retrieval_annotations = json.load(f)
+        self.subset = subset
+        self.images_dict = self.get_images_dict()
+
+    def get_images_dict(self):
+        new_dic = {}
+        for k, v in self.retrieval_annotations[self.subset].items():
+            for x in v:
+                new_dic.setdefault(x, []).append(k)
+        return new_dic
+
+    def __len__(self):
+        return len(self.images_dict.keys())
+
+    def __getitem__(self, idx):
+        img_id = list(self.images_dict.keys())[idx]
+        filename = self.coco_dataset.coco.loadImgs(img_id)[0]['file_name']
+
+        image_path = os.path.join(self.coco_dataset.root, filename)
+        image = Image.open(image_path)
+
+        cats = [int(obj) for obj in self.images_dict[img_id]]
+
+        return image, cats
+

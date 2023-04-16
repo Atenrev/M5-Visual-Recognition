@@ -6,18 +6,12 @@ import torch
 import json
 from tqdm import tqdm
 
-# from detectron2 import model_zoo
-# from detectron2.config import get_cfg
-# from detectron2.engine import DefaultPredictor
-# from detectron2.utils.visualizer import Visualizer, ColorMode
-# from detectron2.data import MetadataCatalog
-
 from src.models.resnet import ResNetWithEmbedder
 
 from src.utils import get_configuration
 from src.datasets.coco import create_coco_dataloader
 from src.datasets.coco import TripletCOCO
-from src.datasets.coco import TripletHistogramsCOCO
+# from src.datasets.coco import TripletHistogramsCOCO
 
 import torch.optim as optim
 import torch.nn as nn
@@ -46,14 +40,6 @@ def _parse_args() -> argparse.Namespace:
                         help='Path to the dataset config file.')
     parser.add_argument('--retrieval_file', type=str, default='mcv_image_retrieval_annotations.json',
                         help='Path to the retrieval file.')
-    # parser.add_argument("--train_instances", "-ta", type=str, default="../datasets/COCO/instances_train2014.json",
-    #                     help="Path to COCO train instances file in JSON format")
-    # parser.add_argument("--val_instances", "-va", type=str, default="../datasets/COCO/instances_val2014.json",
-    #                     help="Path to COCO val instances file in JSON format")
-    # parser.add_argument("--train_images", "-ti", type=str, default="../datasets/COCO/train2014",
-    #                     help="Path to COCO train images")
-    # parser.add_argument("--val_images", "-vi", type=str, default="../datasets/COCO/val2014",
-    #                     help="Path to COCO val images")
 
     # Metric Learning Model settings
     parser.add_argument('--embedding_size', type=int, default=256,
@@ -119,32 +105,6 @@ def run_model_on_images(cfg, input_dir):
 
     # Read instances files in JSON format
     instances_train = json.load(open("/Users/Alex/MacBook Pro/MSc in CV/M5 - Visual Recognition/M5-Visual-Recognition/datasets/COCO/instances_train2014.json"))
-
-
-def get_base_cfg(args):
-    cfg = get_cfg()
-
-    if args.model == "mask_rcnn":
-        cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml"))
-    elif args.model == "faster_rcnn":
-        cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml"))
-    else:
-        raise ValueError("Unknown model.")
-
-    cfg.DATALOADER.NUM_WORKERS = 0
-
-    if args.checkpoint is None:
-        if args.model == "mask_rcnn":
-            cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml")
-        elif args.model == "faster_rcnn":
-            cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml")
-    else:
-        cfg.MODEL.WEIGHTS = args.checkpoint
-
-    cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-    cfg.OUTPUT_DIR = args.output_dir
-
-    return cfg
 
 
 class TripletLoss(nn.Module):
