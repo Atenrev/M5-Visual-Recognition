@@ -137,7 +137,7 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
         print(f"Query arr shape: {query_arr.shape}")
         query_arr = np.squeeze(query_arr)
         print(f"Query arr shape: {query_arr.shape}")
-        outputs = predictor(query_arr)
+        outputs = predictor(query.cpu().numpy())
         print(f"Outputs: {outputs}")
 
         pred_classes = outputs['instances'].pred_classes.cpu().tolist()
