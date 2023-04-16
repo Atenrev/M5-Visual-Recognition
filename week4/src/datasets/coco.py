@@ -228,7 +228,7 @@ class RetrievalCOCO(Dataset):
         transform = transforms.Compose(
             [
                 transforms.Resize((self.config.input_resize, self.config.input_resize)),
-                transforms.ToTensor(),
+                # transforms.ToTensor(),
                 transforms.ConvertImageDtype(torch.float32),
                 transforms.Normalize(
                     mean=[0.4850, 0.4560, 0.4060],
@@ -241,7 +241,10 @@ class RetrievalCOCO(Dataset):
         filename = self.coco_dataset.coco.loadImgs(img_id)[0]['file_name']
 
         image_path = os.path.join(self.coco_dataset.root, filename)
-        image = Image.open(image_path)
+
+        image = np.array(Image.open(image_path).convert("RGB")).transpose(2, 0, 1)
+        image = torch.tensor(image).float() / 255
+
         image = self.transforms(image)
 
         cats = [int(obj) for obj in self.images_dict[img_id]]
