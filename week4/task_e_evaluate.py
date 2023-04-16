@@ -179,7 +179,7 @@ def main(args: argparse.Namespace):
 
     # Test dataset, either val or test (conceptually the same)
     test_dataset = RetrievalCOCO(
-        coco_dataset=train_ds,
+        coco_dataset=val_ds,
         json_file=os.path.join(args.dataset_path, args.retrieval_file),
         subset=args.test_subset,
         config=dataset_config,
