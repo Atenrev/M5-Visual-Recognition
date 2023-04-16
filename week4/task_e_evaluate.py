@@ -134,6 +134,8 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
         #     outputs = predictor([{"image": query}])
         query_img = query.cpu().numpy()
         print(f"Query img shape: {query_img.shape}")
+        query_img = np.moveaxis(query_img, 0, -1)
+        print(f"Query img shape: {query_img.shape}")
 
         outputs = predictor(query.cpu().numpy())
         print(f"Outputs: {outputs}")
