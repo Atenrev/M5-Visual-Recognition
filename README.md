@@ -34,3 +34,11 @@
 [Presentation slides](https://docs.google.com/presentation/d/1fATsuFsUoD_CjUBYmI8Pr8WGOHp-kMw_m_ujcg-kkGQ/edit?usp=sharing)
 
 [Code](week3/readme.md)
+
+## Lab 4
+
+[Overleaf document](https://www.overleaf.com/read/wczvtbgkzmtz)
+
+[Presentation slides](https://docs.google.com/presentation/d/1Nc-LMoexcwWQh2YC-LRhskNEfGTeSG66W5IjuYabq2U/edit?usp=sharing)
+
+[Code](week4/readme.md)
