@@ -8,6 +8,7 @@ from cycler import cycler
 import umap
 from sklearn import manifold
 from sklearn.decomposition import PCA
+import torch
 
 from src.metrics import *
 from src.utils import return_image_full_range
