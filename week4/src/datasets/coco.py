@@ -8,7 +8,8 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
 from torchvision.datasets import CocoDetection
-import torchvision.transforms.v2 as transforms
+# import torchvision.transforms.v2 as transforms
+import torchvision.transforms as transforms
 from torchvision import datasets
 
 from typing import Any
@@ -198,7 +199,7 @@ class RetrievalCOCO(Dataset):
     """
     Custom dataset class for Image Retrieval task on COCO dataset with Faster R-CNN or Mask R-CNN object detector.
     """
-    def __init__(self, coco_dataset, json_file, subset):
+    def __init__(self, coco_dataset, json_file, subset, config):
         """
         Args:
             coco_dataset (torchvision.datasets.CocoDetection): COCO dataset object.
@@ -211,6 +212,7 @@ class RetrievalCOCO(Dataset):
             self.retrieval_annotations = json.load(f)
         self.subset = subset
         self.images_dict = self.get_images_dict()
+        self.config = config
 
     def get_images_dict(self):
         new_dic = {}
@@ -221,6 +223,18 @@ class RetrievalCOCO(Dataset):
 
     def __len__(self):
         return len(self.images_dict.keys())
+
+    def transforms(self, image):
+        transform = transforms.Compose(
+            [
+                transforms.Resize((self.config.input_resize, self.config.input_resize)),
+                transforms.ToTensor(),
+                transforms.ConvertImageDtype(torch.float32),
+                transforms.Normalize(
+                    mean=[0.4850, 0.4560, 0.4060],
+                    std=[0.2290, 0.2240, 0.2250]),
+            ])
+        return transform(image)
 
     def __getitem__(self, idx):
         img_id = list(self.images_dict.keys())[idx]

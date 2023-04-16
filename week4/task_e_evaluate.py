@@ -171,6 +171,7 @@ def main(args: argparse.Namespace):
         coco_dataset=train_ds,
         json_file=os.path.join(args.dataset_path, args.retrieval_file),
         subset="database",
+        config=dataset_config,
     )
     database_loader = DataLoader(database_dataset, batch_size=1, shuffle=False, num_workers=0)
 
@@ -179,6 +180,7 @@ def main(args: argparse.Namespace):
         coco_dataset=train_ds,
         json_file=os.path.join(args.dataset_path, args.retrieval_file),
         subset=args.test_subset,
+        config=dataset_config,
     )
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0)
 
