@@ -123,7 +123,8 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
     top_10_acc = []
 
     embeds = []
-    for idx in tqdm(range(len(test_dataloader.dataset))):
+    for idx in tqdm(range(5)):
+    # for idx in tqdm(range(len(test_dataloader.dataset))):
         print(f"Test dataloader idx: {idx}")
         query, label_query = test_dataloader.dataset[idx]
         query_img, _ = test_dataloader.dataset.__getitem__(idx, True)
