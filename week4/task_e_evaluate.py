@@ -137,7 +137,7 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
         query_img = np.moveaxis(query_img, 0, -1)
         print(f"Query img shape: {query_img.shape}")
 
-        outputs = predictor(query.cpu().numpy())
+        outputs = predictor(query_img)
         print(f"Outputs: {outputs}")
 
         pred_classes = outputs['instances'].pred_classes.cpu().tolist()
