@@ -1,5 +1,7 @@
 import os
 import argparse
+
+import torch
 from tqdm import tqdm
 import logging
 import numpy as np
@@ -124,6 +126,8 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
         print(f"Test dataloader idx: {idx}")
         query, label_query = test_dataloader.dataset[idx]
 
+        print(f"Query shape: {query.shape}")
+        query = torch.unsqueeze(query, 0)
         print(f"Query shape: {query.shape}")
         with torch.no_grad():
             outputs = predictor(query)
