@@ -132,6 +132,8 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
         print(f"Query shape: {query.shape}")
         # with torch.no_grad():
         #     outputs = predictor([{"image": query}])
+        query_img = query.cpu().numpy()
+        print(f"Query img shape: {query_img.shape}")
 
         outputs = predictor(query.cpu().numpy())
         print(f"Outputs: {outputs}")
