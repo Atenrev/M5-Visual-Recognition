@@ -112,7 +112,7 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
     # predictor = DefaultPredictor(cfg)
     predictor = build_model(cfg)
     predictor.eval()
-    predictor.summary()
+    # predictor.summary()
     num_cats = 91
 
     # Metrics
@@ -128,10 +128,10 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
         query, label_query = test_dataloader.dataset[idx]
 
         print(f"Query shape: {query.shape}")
-        query = torch.unsqueeze(query, 0)
+        # query = torch.unsqueeze(query, 0)
         print(f"Query shape: {query.shape}")
         with torch.no_grad():
-            outputs = predictor(query)
+            outputs = predictor([{"image": query}])
         # outputs = predictor(query)
         print(f"Outputs: {outputs.shape}")
 
