@@ -242,6 +242,7 @@ class RetrievalCOCO(Dataset):
 
         image_path = os.path.join(self.coco_dataset.root, filename)
         image = Image.open(image_path)
+        image = self.transforms(image)
 
         cats = [int(obj) for obj in self.images_dict[img_id]]
 
