@@ -16,7 +16,9 @@ from torch.utils.data import DataLoader
 
 from detectron2 import model_zoo
 from detectron2.config import get_cfg
-from detectron2.engine import DefaultPredictor
+# from detectron2.engine import DefaultPredictor
+from detectron2.modeling import build_model
+
 # from detectron2.utils.visualizer import Visualizer, ColorMode
 # from detectron2.data import MetadataCatalog
 
@@ -105,7 +107,9 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
 
     # Object Detection Model
     cfg = get_base_cfg(args)
-    predictor = DefaultPredictor(cfg)
+    # predictor = DefaultPredictor(cfg)
+    predictor = build_model(cfg)
+    predictor.eval()
     num_cats = 91
 
     # Metrics
@@ -117,10 +121,15 @@ def run_experiment(database_dataloader, test_dataloader, model, embed_size, n_ne
 
     embeds = []
     for idx in tqdm(range(len(test_dataloader.dataset))):
-        print(idx)
+        print(f"Test dataloader idx: {idx}")
         query, label_query = test_dataloader.dataset[idx]
 
-        outputs = predictor(query)
+        print(f"Query shape: {query.shape}")
+        with torch.no_grad():
+            outputs = predictor(query)
+        # outputs = predictor(query)
+        print(f"Outputs: {outputs.shape}")
+
         pred_classes = outputs['instances'].pred_classes.cpu().tolist()
         label_query_hist = np.bincount(pred_classes, minlength=num_cats)
 
