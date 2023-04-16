@@ -33,27 +33,27 @@ def create_coco_dataloader(
         inference: bool = False,
         dataset_kwargs: dict = {},
 ):
-    transform = transforms.Compose(
-        [
-            transforms.Resize((config.input_resize, config.input_resize)),
-            transforms.ToImageTensor(),
-            transforms.ConvertImageDtype(torch.float32),
-            transforms.Normalize(
-                mean=[0.4850, 0.4560, 0.4060],
-                std=[0.2290, 0.2240, 0.2250]),
-        ])
+    # transform = transforms.Compose(
+    #     [
+    #         transforms.Resize((config.input_resize, config.input_resize)),
+    #         transforms.ToImageTensor(),
+    #         transforms.ConvertImageDtype(torch.float32),
+    #         transforms.Normalize(
+    #             mean=[0.4850, 0.4560, 0.4060],
+    #             std=[0.2290, 0.2240, 0.2250]),
+    #     ])
 
     train_dataset = CocoDetection(
         root=os.path.join(dataset_path, "train2014"),
         annFile=os.path.join(dataset_path, "instances_train2014.json"),
-        transforms=transform,
+        # transforms=transform,
     )
     train_dataset = datasets.wrap_dataset_for_transforms_v2(train_dataset)
 
     test_dataset = CocoDetection(
         root=os.path.join(dataset_path, "val2014"),
         annFile=os.path.join(dataset_path, "instances_val2014.json"),
-        transforms=transform,
+        # transforms=transform,
     )
     test_dataset = datasets.wrap_dataset_for_transforms_v2(test_dataset)
 
