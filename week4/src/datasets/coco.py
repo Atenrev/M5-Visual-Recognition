@@ -48,14 +48,14 @@ def create_coco_dataloader(
         annFile=os.path.join(dataset_path, "instances_train2014.json"),
         # transforms=transform,
     )
-    train_dataset = datasets.wrap_dataset_for_transforms_v2(train_dataset)
+    # train_dataset = datasets.wrap_dataset_for_transforms_v2(train_dataset)
 
     test_dataset = CocoDetection(
         root=os.path.join(dataset_path, "val2014"),
         annFile=os.path.join(dataset_path, "instances_val2014.json"),
         # transforms=transform,
     )
-    test_dataset = datasets.wrap_dataset_for_transforms_v2(test_dataset)
+    # test_dataset = datasets.wrap_dataset_for_transforms_v2(test_dataset)
 
     if not inference:
         train_dataloader = DataLoader(
