@@ -6,6 +6,7 @@ import random
 import numpy as np
 import torchvision.transforms as transforms
 
+from tqdm import tqdm
 from typing import List
 from torch.utils.data import DataLoader, Dataset
 
@@ -23,6 +24,8 @@ class ImageToTextCOCO(Dataset):
             transforms (torchvision.transforms): Transforms to apply to the images.
             subset (str): Subset of the dataset to use. Options: train2014, val2014.
         """
+        print(f"Loading COCO {subset} dataset...")
+
         with open(caption_anns, 'r') as f:
             # Format of the json file: 
             # [{’image_id’: 318556, ’id’: 48, ’caption’: ’A very clean and well…’}, ...]
@@ -31,8 +34,8 @@ class ImageToTextCOCO(Dataset):
         image_with_caption = [caption['image_id'] for caption in self.caption_anns]
         self.image_paths: List[str] = []
         self.image_ids: List[int] = []
-
-        for image_id in os.listdir(os.path.join(root_path, subset)):
+        
+        for image_id in tqdm(os.listdir(os.path.join(root_path, subset))):
             # If image_id is not in caption_anns, then it is not a valid image
             image_id_int = int(image_id.split('.')[0].split('_')[-1])
 
@@ -50,6 +53,8 @@ class ImageToTextCOCO(Dataset):
     def load_image(self, idx):
         img = cv2.imread(self.image_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = torch.from_numpy(img).permute(2, 0, 1)
+        img = img / 255.0
         return img
 
     def __getitem__(self, idx, return_triplet: bool = True):
@@ -91,7 +96,7 @@ def create_dataloader(
     """
     transform = transforms.Compose(
         [
-            transforms.Resize(224),
+            transforms.Resize(input_size),
             # transforms.ConvertImageDtype(torch.float32),
             transforms.Normalize(
                 mean=[0.4850, 0.4560, 0.4060],
