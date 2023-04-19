@@ -1,7 +1,9 @@
 import os
-import numpy as np
 import json
+import torch
 import random
+import numpy as np
+import torchvision.transforms as transforms
 
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import CocoDetection
@@ -65,6 +67,7 @@ def create_dataloader(
         dataset_path: str,
         batch_size: int,
         inference: bool = False,
+        input_size: int = 224,
 ):
     """
     Creates a dataloader for the COCO dataset.
@@ -78,14 +81,25 @@ def create_dataloader(
         train_dataloader (torch.utils.data.DataLoader): Dataloader for training.
         test_dataloader (torch.utils.data.DataLoader): Dataloader for testing.
     """
+    transform = transforms.Compose(
+        [
+            transforms.Resize((input_size, input_size)),
+            transforms.ToImageTensor(),
+            transforms.ConvertImageDtype(torch.float32),
+            transforms.Normalize(
+                mean=[0.4850, 0.4560, 0.4060],
+                std=[0.2290, 0.2240, 0.2250]),
+        ])
     train_coco_dataset = CocoDetection(
         root=os.path.join(dataset_path, "train2014"),
         annFile=os.path.join(dataset_path, "instances_train2014.json"),
+        transforms=transform,
     )
 
     val_coco_dataset = CocoDetection(
         root=os.path.join(dataset_path, "val2014"),
         annFile=os.path.join(dataset_path, "instances_val2014.json"),
+        transforms=transform,
     )
     
     # Create dataset
