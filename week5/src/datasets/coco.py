@@ -32,7 +32,7 @@ class ImageToTextCOCO(Dataset):
     def __len__(self):
         return len(self.coco_dataset)
 
-    def __getitem__(self, idx, return_triplet: bool = False):
+    def __getitem__(self, idx, return_triplet: bool = True):
         img, target = self.coco_dataset[idx]
 
         # If target has no annotations, randomly select a new image
