@@ -8,7 +8,7 @@
 python task_a.py \
     --loss "triplet"  \
     --output_path "outputs_task_a/" \
-    --dataset_path "/home/mcv/datasets/MIT_split/" \
+    --dataset_path "/home/mcv/datasets/COCO/" \
 	--image_encoder resnet_18 \
     --embedding_size 256 \
 	--batch_size 64 \
