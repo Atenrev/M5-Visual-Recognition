@@ -32,9 +32,10 @@ class ImageToTextCOCO(Dataset):
 
     def __getitem__(self, idx, return_triplet: bool = False):
         img, target = self.coco_dataset[idx]
+        target = target[0]
 
         # If target has no annotations, randomly select a new image
-        while 'category_id' not in target.keys():
+        while 'image_id' not in target.keys():
             idx = random.choice(range(len(self.coco_dataset)))
             img, target = self.coco_dataset[idx]
         
