@@ -34,8 +34,7 @@ tqdm==4.65.0
 triton==2.0.0
 typing_extensions==4.5.0
 urllib3==1.26.15
-annoy
-pytorch-metric-learning[with-hooks]
+pytorch-metric-learning[with-hooks-cpu]
 umap-learn
 kornia
 munch
