@@ -32,13 +32,13 @@ class ImageToTextCOCO(Dataset):
 
     def __getitem__(self, idx, return_triplet: bool = False):
         img, target = self.coco_dataset[idx]
-        target = target[0]
 
         # If target has no annotations, randomly select a new image
-        while 'image_id' not in target.keys():
+        while len(target) == 0:
             idx = random.choice(range(len(self.coco_dataset)))
             img, target = self.coco_dataset[idx]
         
+        target = target[0]
         # Get image caption (positive caption)
         positive_caption = [caption['caption'] for caption in self.caption_anns if caption['image_id'] == target['image_id']][0]
 
