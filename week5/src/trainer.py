@@ -65,16 +65,16 @@ class Runner:
                     (positive_distances < negative_distances).float()).item()
                 self.metrics['accuracy'].update(accuracy)
             else:
-                # Compute pairwise distances between all images and texts
-                distances = torch.cdist(image_embeddings.detach().cpu(), text_embeddings.detach().cpu()).numpy()
-                # Find the index of the smallest distance for each image embedding and text embedding
-                image_matches = np.argmin(distances, axis=1)
-                text_matches = np.argmin(distances, axis=0)
-                # Compute accuracy
-                correct_matches = 0
-                for i in range(batch_size):
-                    if text_matches[image_matches[i]] == i:
-                        correct_matches += 1
+                # Compute pairwise distances
+                distances = np.dot(image_embeddings.detach().cpu().numpy(), text_embeddings.T.detach().cpu().numpy())
+                distances = 1 - distances  # convert dot product to cosine distance
+
+                # Find most similar embeddings
+                image_to_text = np.argmin(distances, axis=1)
+                text_to_image = np.argmin(distances, axis=0)
+
+                # Compute accuracy score
+                correct_matches = np.sum(np.arange(batch_size) == image_to_text[text_to_image])
                 accuracy = correct_matches / batch_size
                 self.metrics['accuracy'].update(accuracy)
 

@@ -68,5 +68,5 @@ class ImageToTextWithTempModel(torch.nn.Module):
             ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         image_embedding = self.image_encoder(anchor_image)
         text_embedding = self.text_encoder(text_input_ids, text_attention_mask)
-        logits = torch.matmul(image_embedding, text_embedding.T) * torch.exp(self.temperature)
+        logits = torch.mm(image_embedding, text_embedding.T) * torch.exp(self.temperature)
         return logits, image_embedding, text_embedding

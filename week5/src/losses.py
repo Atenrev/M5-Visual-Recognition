@@ -1,13 +1,8 @@
 import torch
-
-from torch import nn
+import torch.nn.functional as F
 
 
 class SymmetricCrossEntropyLoss(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.cross_entropy = nn.CrossEntropyLoss()
-
     def forward(
             self,
             logits: torch.Tensor,
@@ -19,6 +14,6 @@ class SymmetricCrossEntropyLoss(torch.nn.Module):
             torch.Tensor of shape (1,)
         """
         labels = torch.arange(logits.shape[0], device=logits.device)
-        loss_i = self.cross_entropy(logits, labels)
-        loss_j = self.cross_entropy(logits.T, labels)
+        loss_i = F.cross_entropy(logits, labels)
+        loss_j = F.cross_entropy(logits.T, labels)
         return (loss_i + loss_j) / 2
