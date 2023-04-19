@@ -29,9 +29,9 @@ class ImageToTextCOCO(Dataset):
         with open(caption_anns, 'r') as f:
             # Format of the json file: 
             # [{’image_id’: 318556, ’id’: 48, ’caption’: ’A very clean and well…’}, ...]
-            self.caption_anns = json.load(f)["annotations"]
+            caption_anns = json.load(f)["annotations"]
 
-        image_with_caption = [caption['image_id'] for caption in self.caption_anns]
+        image_with_caption = [caption['image_id'] for caption in caption_anns]
 
         # Check if image_paths and image_ids are in cache. If so, load them.
         if os.path.exists(os.path.join("cache", f"{subset}_image_paths.npy")):
@@ -42,16 +42,20 @@ class ImageToTextCOCO(Dataset):
             print("Creating image_paths and image_ids...")
             self.image_paths: List[str] = []
             self.image_ids: List[int] = []
+            self.captions: List[str] = []
             
             for image_id in tqdm(os.listdir(os.path.join(root_path, subset))):
                 # If image_id is not in caption_anns, then it is not a valid image
                 image_id_int = int(image_id.split('.')[0].split('_')[-1])
 
-                if image_id_int not in image_with_caption:
+                try:
+                    caption_idx = image_with_caption.index(image_id_int)
+                except ValueError:
                     continue
 
                 self.image_paths.append(os.path.join(root_path, subset, image_id))
                 self.image_ids.append(image_id_int)
+                self.captions.append(caption_anns[caption_idx]['caption'])
 
             # Save image_paths and image_ids to cache
             os.makedirs("cache", exist_ok=True)
@@ -147,7 +151,7 @@ def create_dataloader(
         train_dataloader = DataLoader(
             dataset=train_dataset,
             batch_size=batch_size,
-            shuffle=False,
+            shuffle=True,
             num_workers=0,
             # collate_fn=lambda batch: tuple(zip(*batch)),
         )
