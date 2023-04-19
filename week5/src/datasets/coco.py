@@ -38,6 +38,7 @@ class ImageToTextCOCO(Dataset):
             print("Loading image_paths and image_ids from cache...")
             self.image_paths = np.load(os.path.join("cache", f"{subset}_image_paths.npy"), allow_pickle=True).tolist()
             self.image_ids = np.load(os.path.join("cache", f"{subset}_image_ids.npy"), allow_pickle=True).tolist()
+            self.captions = np.load(os.path.join("cache", f"{subset}_captions.npy"), allow_pickle=True).tolist()
         else:
             print("Creating image_paths and image_ids...")
             self.image_paths: List[str] = []
@@ -57,10 +58,11 @@ class ImageToTextCOCO(Dataset):
                 self.image_ids.append(image_id_int)
                 self.captions.append(caption_anns[caption_idx]['caption'])
 
-            # Save image_paths and image_ids to cache
+            # Save image_paths, image_ids and captions to cache
             os.makedirs("cache", exist_ok=True)
             np.save(os.path.join("cache", f"{subset}_image_paths.npy"), self.image_paths)
             np.save(os.path.join("cache", f"{subset}_image_ids.npy"), self.image_ids)
+            np.save(os.path.join("cache", f"{subset}_captions.npy"), self.captions)
 
         print(f"Loaded {len(self.image_paths)} images from COCO {subset} dataset.")
         self.transforms = transforms
@@ -83,13 +85,16 @@ class ImageToTextCOCO(Dataset):
             img = self.transforms(img)
         
         # Get image caption (positive caption)
-        positive_caption = [caption['caption'] for caption in self.caption_anns if caption['image_id'] == image_id][0]
+        positive_caption = self.captions[idx]
 
         if not return_triplet:
             return img, positive_caption
 
         # Get negative caption
-        negative_caption = random.choice([caption['caption'] for caption in self.caption_anns if caption['image_id'] != image_id])
+        negative_caption = random.choice(self.captions)
+
+        while negative_caption == positive_caption:
+            negative_caption = random.choice(self.captions)
 
         return img, positive_caption, negative_caption
     
