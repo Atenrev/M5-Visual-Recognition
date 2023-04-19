@@ -91,7 +91,7 @@ def create_dataloader(
     """
     transform = transforms.Compose(
         [
-            transforms.RandomSizedCrop(224),
+            transforms.Resize(224),
             # transforms.ConvertImageDtype(torch.float32),
             transforms.Normalize(
                 mean=[0.4850, 0.4560, 0.4060],
