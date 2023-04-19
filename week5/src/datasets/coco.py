@@ -1,12 +1,13 @@
 import os
+import cv2
 import json
 import torch
 import random
 import numpy as np
 import torchvision.transforms as transforms
 
+from typing import List
 from torch.utils.data import DataLoader, Dataset
-from torchvision.datasets import CocoDetection
 
 
 class ImageToTextCOCO(Dataset):
@@ -14,53 +15,60 @@ class ImageToTextCOCO(Dataset):
     Custom dataset class for creating triplets from COCO dataset for image retrieval task with Faster R-CNN or Mask R-CNN.
     """
 
-    def __init__(self, coco_dataset, caption_anns: str, subset: str = "train"):
+    def __init__(self, root_path: str, caption_anns: str, transforms=None, subset: str = 'train2014'):
         """
         Args:
-            coco_dataset (torchvision.datasets.CocoDetection): COCO dataset object.
-            json_file (str): Path to the JSON file containing positive and negative examples for creating triplets.
+            root_path (str): Path to the COCO dataset.
+            caption_anns (str): Path to the json file containing the captions.
+            transforms (torchvision.transforms): Transforms to apply to the images.
+            subset (str): Subset of the dataset to use. Options: train2014, val2014.
         """
-        self.coco_dataset = coco_dataset
-
         with open(caption_anns, 'r') as f:
             # Format of the json file: 
             # [{’image_id’: 318556, ’id’: 48, ’caption’: ’A very clean and well…’}, ...]
             self.caption_anns = json.load(f)["annotations"]
 
-        self.subset = subset
+        image_with_caption = [caption['image_id'] for caption in self.caption_anns]
+        self.image_paths: List[str] = []
+        self.image_ids: List[int] = []
+
+        for image_id in os.listdir(os.path.join(root_path, subset)):
+            # If image_id is not in caption_anns, then it is not a valid image
+            image_id_int = int(image_id.split('.')[0].split('_')[-1])
+
+            if image_id_int not in image_with_caption:
+                continue
+
+            self.image_paths.append(os.path.join(root_path, subset, image_id))
+            self.image_ids.append(image_id_int)
+
+        self.transforms = transforms
 
     def __len__(self):
-        return len(self.coco_dataset)
+        return len(self.image_paths)
+    
+    def load_image(self, idx):
+        img = cv2.imread(self.image_paths[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        return img
 
     def __getitem__(self, idx, return_triplet: bool = True):
-        img, target = self.coco_dataset[idx]
+        img = self.load_image(idx)
+        image_id = self.image_ids[idx]
 
-        # If target has no annotations, randomly select a new image
-        while len(target) == 0:
-            idx = random.choice(range(len(self.coco_dataset)))
-            img, target = self.coco_dataset[idx]
+        if self.transforms is not None:
+            img = self.transforms(img)
         
-        target = target[0]
         # Get image caption (positive caption)
-        positive_caption = [caption['caption'] for caption in self.caption_anns if caption['image_id'] == target['image_id']][0]
+        positive_caption = [caption['caption'] for caption in self.caption_anns if caption['image_id'] == image_id][0]
 
         if not return_triplet:
             return img, positive_caption
 
         # Get negative caption
-        negative_caption = random.choice([caption['caption'] for caption in self.caption_anns if caption['image_id'] != target['image_id']])
+        negative_caption = random.choice([caption['caption'] for caption in self.caption_anns if caption['image_id'] != image_id])
 
         return img, positive_caption, negative_caption
-
-    def get_labels(self, idx):
-        """
-        Returns the category labels corresponding to the given indices.
-        Args:
-            idx (numpy.ndarray): Array of indices.
-        Returns:
-            numpy.ndarray: Array of category labels corresponding to the given indices.
-        """
-        return np.array([self.coco_dataset.coco.loadAnns(self.coco_dataset.coco.getAnnIds(imgIds=self.coco_dataset.ids[i]))[0]['category_id'] for i in idx])
     
 
 def create_dataloader(
@@ -83,24 +91,24 @@ def create_dataloader(
     """
     transform = transforms.Compose(
         [
-            transforms.Resize((input_size, input_size)),
-            transforms.ToTensor(),
-            transforms.ConvertImageDtype(torch.float32),
+            transforms.RandomSizedCrop(224),
+            # transforms.ConvertImageDtype(torch.float32),
             transforms.Normalize(
                 mean=[0.4850, 0.4560, 0.4060],
                 std=[0.2290, 0.2240, 0.2250]),
+            # transforms.ToTensor(),
         ])
-    train_coco_dataset = CocoDetection(
-        root=os.path.join(dataset_path, "train2014"),
-        annFile=os.path.join(dataset_path, "instances_train2014.json"),
-        transforms=lambda x, t: (transform(x), t),
-    )
+    # train_coco_dataset = CocoDetection(
+    #     root=os.path.join(dataset_path, "train2014"),
+    #     annFile=os.path.join(dataset_path, "instances_train2014.json"),
+    #     transforms=lambda x, t: (transform(x), t),
+    # )
 
-    val_coco_dataset = CocoDetection(
-        root=os.path.join(dataset_path, "val2014"),
-        annFile=os.path.join(dataset_path, "instances_val2014.json"),
-        transforms=lambda x, t: (transform(x), t),
-    )
+    # val_coco_dataset = CocoDetection(
+    #     root=os.path.join(dataset_path, "val2014"),
+    #     annFile=os.path.join(dataset_path, "instances_val2014.json"),
+    #     transforms=lambda x, t: (transform(x), t),
+    # )
     
     # Create dataset
     train_dataset = ImageToTextCOCO(
