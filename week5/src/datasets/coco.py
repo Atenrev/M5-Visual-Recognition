@@ -112,12 +112,17 @@ def create_dataloader(
     
     # Create dataset
     train_dataset = ImageToTextCOCO(
-        coco_dataset=train_coco_dataset,
+        root_path=dataset_path,
         caption_anns=os.path.join(dataset_path, "captions_train2014.json"),
-        subset="train",
+        subset="train2014",
+        transforms=transform,
     )
-    val_dataset = val_coco_dataset
-    
+    val_dataset = ImageToTextCOCO(
+        root_path=dataset_path,
+        caption_anns=os.path.join(dataset_path, "captions_val2014.json"),
+        subset="val2014",
+        transforms=transform,
+    )    
 
     if not inference:
         train_dataloader = DataLoader(
