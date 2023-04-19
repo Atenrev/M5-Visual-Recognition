@@ -2,7 +2,7 @@ import tqdm
 import torch
 import numpy as np
 
-from src.metrics import LossMetric
+from src.metrics import LossMetric, BasicAccuracyMetric
 from src.trackers.tracker import Stage, ExperimentTracker
 from src.models.triplet_nets import TripletModel
 
@@ -91,7 +91,7 @@ class Runner:
     def reset(self):
         self.metrics = {
             'loss': LossMetric(),
-            'accuracy': LossMetric()
+            'accuracy': BasicAccuracyMetric()
         }
 
 

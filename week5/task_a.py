@@ -33,7 +33,7 @@ def __parse_args() -> argparse.Namespace:
     # Model configuration
     parser.add_argument('--image_encoder', type=str, default='resnet_18',
                         help='Model to use. Options: resnet_X, vgg.')
-    parser.add_argument('--text_encoder', type=str, default='bert',
+    parser.add_argument('--text_encoder', type=str, default='clip',
                         help='Model to use. Options: clip, bert.')
     parser.add_argument('--embedding_size', type=int, default=256,
                         help='Size of the embedding vector.')

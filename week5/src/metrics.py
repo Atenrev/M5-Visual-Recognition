@@ -32,3 +32,9 @@ class LossMetric(Metric):
     name: str = "loss"
     inpyt_type: str = "float"
     pass
+
+
+class BasicAccuracyMetric(Metric):
+    name: str = "accuracy"
+    inpyt_type: str = "float"
+    pass
