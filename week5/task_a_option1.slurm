@@ -5,7 +5,7 @@
 #SBATCH --gres gpu:1 # Para pedir Pascales MAX 8
 #SBATCH -o logs/%x_%u_%j.out # File to which STDOUT will be written
 #SBATCH -e logs/%x_%u_%j.err # File to which STDERR will be written
-python task_b.py \
+python task_a.py \
     --loss "triplet"  \
     --output_path "outputs_task_a/" \
     --dataset_path "/home/mcv/datasets/MIT_split/" \
