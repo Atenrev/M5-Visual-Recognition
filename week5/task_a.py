@@ -62,7 +62,6 @@ RUN_COUNT = 0
 
 
 def run_epoch(dataloader, model, loss_fn, optimizer, device, train=True, tracker=None) -> dict:
-    import time
     global RUN_COUNT
 
     if train:
@@ -71,12 +70,9 @@ def run_epoch(dataloader, model, loss_fn, optimizer, device, train=True, tracker
         model.eval()
 
     metrics = {'loss': LossMetric()}
-    start = time.time()
 
     # Print loss with tqdm
     for batch in (pbar := tqdm.tqdm(dataloader, desc='Epoch', leave=False)):
-        end = time.time()
-        print("dataloading took", end - start)
         anchors, positives, negatives = batch
         anchors = anchors.to(device)
         positives = model.tokenize(positives).to(device)
@@ -88,10 +84,7 @@ def run_epoch(dataloader, model, loss_fn, optimizer, device, train=True, tracker
                             negatives.input_ids, negatives.attention_mask)
             loss = loss_fn(*embeddings)
         else:
-            start = time.time()
             logits = model(anchors, positives.input_ids, positives.attention_mask)
-            end = time.time()
-            print("model took", end - start)
             loss = loss_fn(logits)
 
         # Backward
@@ -112,7 +105,6 @@ def run_epoch(dataloader, model, loss_fn, optimizer, device, train=True, tracker
         RUN_COUNT += 1
         pbar.set_postfix(
             {metric_name: metric_value.values[-1] for metric_name, metric_value in metrics.items()})
-        start = time.time()
 
     return {metric_name: metric_value.average for metric_name, metric_value in metrics.items()}
 
@@ -240,7 +232,10 @@ def main(args: argparse.Namespace):
 
     # Train
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device {device}")
+
     model.to(device)
+
     train(train_dataloader, val_dataloader, model,
           loss_fn, optimizer, device, tracker=tracker)
 
