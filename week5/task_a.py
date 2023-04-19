@@ -194,6 +194,7 @@ def main(args: argparse.Namespace):
     # )
 
     # Create loss
+    print(f"Using loss {args.loss}")
     if args.loss == 'triplet':
         loss_fn = torch.nn.TripletMarginLoss(
             margin=args.triplet_margin,
