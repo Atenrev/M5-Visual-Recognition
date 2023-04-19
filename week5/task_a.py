@@ -8,13 +8,13 @@ import matplotlib
 from datetime import datetime
 
 from src.losses import SymmetricCrossEntropyLoss
-from src.metrics import LossMetric
+from src.trainer import train
 from src.trackers.wandb_tracker import WandbTracker
-from src.trackers.tracker import Stage, ExperimentTracker
-from src.datasets.coco import create_dataloader as create_coco_dataloader
-from src.models.triplet_nets import TripletModel, ImageToTextTripletModel, ImageToTextWithTempModel
+from src.models.triplet_nets import ImageToTextTripletModel, ImageToTextWithTempModel
 from src.models.resnet import ResNetWithEmbedder
+from src.models.bert_text_encoder import BertTextEncoder
 from src.models.clip_text_encoder import CLIPTextEncoder
+from src.datasets.coco import create_dataloader as create_coco_dataloader
 
 
 def __parse_args() -> argparse.Namespace:
@@ -33,6 +33,8 @@ def __parse_args() -> argparse.Namespace:
     # Model configuration
     parser.add_argument('--image_encoder', type=str, default='resnet_18',
                         help='Model to use. Options: resnet_X, vgg.')
+    parser.add_argument('--text_encoder', type=str, default='bert',
+                        help='Model to use. Options: clip, bert.')
     parser.add_argument('--embedding_size', type=int, default=256,
                         help='Size of the embedding vector.')
     # Loss configuration
@@ -58,97 +60,6 @@ def __parse_args() -> argparse.Namespace:
     return args
 
 
-RUN_COUNT = 0
-
-
-def run_epoch(dataloader, model, loss_fn, optimizer, device, train=True, tracker=None) -> dict:
-    global RUN_COUNT
-
-    if train:
-        model.train()
-    else:
-        model.eval()
-
-    metrics = {'loss': LossMetric()}
-
-    # Print loss with tqdm
-    for batch in (pbar := tqdm.tqdm(dataloader, desc='Epoch', leave=False)):
-        anchors, positives, negatives = batch
-        anchors = anchors.to(device)
-        positives = model.tokenize(positives).to(device)
-        negatives = model.tokenize(negatives).to(device)
-
-        # Forward
-        if isinstance(model, TripletModel):
-            embeddings = model(anchors, positives.input_ids, positives.attention_mask,
-                            negatives.input_ids, negatives.attention_mask)
-            loss = loss_fn(*embeddings)
-        else:
-            logits = model(anchors, positives.input_ids, positives.attention_mask)
-            loss = loss_fn(logits)
-
-        # Backward
-        if train:
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-        # Metrics
-        metrics['loss'].update(loss.item())
-
-        # Log metrics
-        if tracker is not None:
-            for i, metric in enumerate(metrics.values()):
-                tracker.add_batch_metric(
-                    metric.name, metric.values[-1], RUN_COUNT, commit=i == len(metrics) - 1)
-
-        RUN_COUNT += 1
-        pbar.set_postfix(
-            {metric_name: metric_value.values[-1] for metric_name, metric_value in metrics.items()})
-
-    return {metric_name: metric_value.average for metric_name, metric_value in metrics.items()}
-
-
-def train(train_dataloader, val_dataloader, model, loss_fn, optimizer, device, tracker: ExperimentTracker = None, current_epoch: int = 0):
-    best_val_value = np.inf
-
-    for epoch in range(current_epoch, args.epochs):
-        # Train
-        tracker.set_stage(Stage.TRAIN)
-        metrics_train = run_epoch(
-            train_dataloader, model, loss_fn, optimizer, device, train=True, tracker=tracker)
-
-        for metric_name, metric_value in metrics_train.items():
-            tracker.add_epoch_metric(
-                metric_name, metric_value, epoch)
-
-        # Validate
-        tracker.set_stage(Stage.VAL)
-        with torch.no_grad():
-            metrics_val = run_epoch(
-                val_dataloader, model, loss_fn, optimizer, device, train=False, tracker=tracker)
-
-        for metric_name, metric_value in metrics_val.items():
-            tracker.add_epoch_metric(
-                metric_name, metric_value, epoch)
-
-        # Save checkpoint
-        if metrics_val['loss'] < best_val_value:
-            best_val_value = metrics_val['loss']
-            tracker.save_checkpoint(
-                epoch,
-                model,
-                optimizer
-            )
-
-        summary = f"Epoch {epoch}/{args.epochs} - Train loss: {metrics_train['loss']:.4f} - Val loss: {metrics_val['loss']:.4f}"
-        print("\n", summary, "\n")
-
-        tracker.flush()
-
-    tracker.finish()
-
-
 def main(args: argparse.Namespace):
     # Set seeds
     torch.manual_seed(args.seed)
@@ -157,7 +68,7 @@ def main(args: argparse.Namespace):
 
     # Build config dict from args
     config = vars(args)
-    config["metrics"] = []
+    config["metrics"] = ["accuracy"]
     experiment_name = f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
     tracker = WandbTracker(
         log_path="outputs_w5_task_a",
@@ -167,33 +78,35 @@ def main(args: argparse.Namespace):
     )
 
     # Load data
-    train_dataloader, val_dataloader, _ = create_coco_dataloader(
-        args.dataset_path,
-        args.batch_size,
-        inference=False,
-    )
+    # train_dataloader, val_dataloader, _ = create_coco_dataloader(
+    #     args.dataset_path,
+    #     args.batch_size,
+    #     inference=False,
+    # )
     # Create dummy data for testing
-    # def create_dummy_data():
-    #     import string
-    #     anchors = torch.randn((100, 3, 224, 224))
-    #     # generate random strings
-    #     positives = ["".join(random.choices(string.ascii_letters, k=80)) for _ in range(100)]
-    #     negatives = ["".join(random.choices(string.ascii_letters, k=80)) for _ in range(100)]
-    #     data = list(zip(anchors, positives, negatives))
-    #     return data
+    def create_dummy_data():
+        import string
+        anchors = torch.randn((100, 3, 224, 224))
+        # generate random strings
+        positives = ["".join(random.choices(string.ascii_letters, k=80))
+                     for _ in range(100)]
+        negatives = ["".join(random.choices(string.ascii_letters, k=80))
+                     for _ in range(100)]
+        data = list(zip(anchors, positives, negatives))
+        return data
 
-    # train_dataloader = torch.utils.data.DataLoader(
-    #     create_dummy_data(),
-    #     batch_size=args.batch_size,
-    #     shuffle=True,
-    #     num_workers=4,
-    # )
-    # val_dataloader = torch.utils.data.DataLoader(
-    #     create_dummy_data(),
-    #     batch_size=args.batch_size,
-    #     shuffle=False,
-    #     num_workers=4,
-    # )
+    train_dataloader = torch.utils.data.DataLoader(
+        create_dummy_data(),
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=4,
+    )
+    val_dataloader = torch.utils.data.DataLoader(
+        create_dummy_data(),
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=4,
+    )
 
     # Create loss
     print(f"Using loss {args.loss}")
@@ -210,7 +123,13 @@ def main(args: argparse.Namespace):
     # Create model
     # Remember to make sure both models project to the same embedding space
     image_encoder = ResNetWithEmbedder(embed_size=args.embedding_size)
-    text_encoder = CLIPTextEncoder(embed_size=args.embedding_size)
+
+    if args.text_encoder == 'clip':
+        text_encoder = CLIPTextEncoder(embed_size=args.embedding_size)
+    elif args.text_encoder == 'bert':
+        text_encoder = BertTextEncoder(embed_size=args.embedding_size)
+    else:
+        raise ValueError(f"Unknown text encoder {args.text_encoder}")
 
     if args.loss == 'symmetric':
         model = ImageToTextWithTempModel(
@@ -237,7 +156,7 @@ def main(args: argparse.Namespace):
     model.to(device)
 
     train(train_dataloader, val_dataloader, model,
-          loss_fn, optimizer, device, tracker=tracker)
+          loss_fn, optimizer, device, args.epochs, tracker=tracker)
 
 
 if __name__ == "__main__":

@@ -91,10 +91,10 @@ class ImageToTextCOCO(Dataset):
             return img, positive_caption
 
         # Get negative caption
-        negative_caption = random.choice(self.captions)
-
-        while negative_caption == positive_caption:
-            negative_caption = random.choice(self.captions)
+        negative_caption_idx = random.randint(0, len(self.captions) - 1)
+        while negative_caption_idx == idx:
+            negative_caption_idx = random.randint(0, len(self.captions) - 1)
+        negative_caption = self.captions[negative_caption_idx]
 
         return img, positive_caption, negative_caption
     
