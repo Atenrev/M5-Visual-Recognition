@@ -78,35 +78,35 @@ def main(args: argparse.Namespace):
     )
 
     # Load data
-    # train_dataloader, val_dataloader, _ = create_coco_dataloader(
-    #     args.dataset_path,
-    #     args.batch_size,
-    #     inference=False,
-    # )
+    train_dataloader, val_dataloader, _ = create_coco_dataloader(
+        args.dataset_path,
+        args.batch_size,
+        inference=False,
+    )
     # Create dummy data for testing
-    def create_dummy_data():
-        import string
-        anchors = torch.randn((100, 3, 224, 224))
-        # generate random strings
-        positives = ["".join(random.choices(string.ascii_letters, k=80))
-                     for _ in range(100)]
-        negatives = ["".join(random.choices(string.ascii_letters, k=80))
-                     for _ in range(100)]
-        data = list(zip(anchors, positives, negatives))
-        return data
+    # def create_dummy_data():
+    #     import string
+    #     anchors = torch.randn((100, 3, 224, 224))
+    #     # generate random strings
+    #     positives = ["".join(random.choices(string.ascii_letters, k=80))
+    #                  for _ in range(100)]
+    #     negatives = ["".join(random.choices(string.ascii_letters, k=80))
+    #                  for _ in range(100)]
+    #     data = list(zip(anchors, positives, negatives))
+    #     return data
 
-    train_dataloader = torch.utils.data.DataLoader(
-        create_dummy_data(),
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=4,
-    )
-    val_dataloader = torch.utils.data.DataLoader(
-        create_dummy_data(),
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=4,
-    )
+    # train_dataloader = torch.utils.data.DataLoader(
+    #     create_dummy_data(),
+    #     batch_size=args.batch_size,
+    #     shuffle=True,
+    #     num_workers=4,
+    # )
+    # val_dataloader = torch.utils.data.DataLoader(
+    #     create_dummy_data(),
+    #     batch_size=args.batch_size,
+    #     shuffle=False,
+    #     num_workers=4,
+    # )
 
     # Create loss
     print(f"Using loss {args.loss}")
