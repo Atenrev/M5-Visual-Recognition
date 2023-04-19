@@ -62,6 +62,7 @@ RUN_COUNT = 0
 
 
 def run_epoch(dataloader, model, loss_fn, optimizer, device, train=True, tracker=None) -> dict:
+    import time
     global RUN_COUNT
 
     if train:
@@ -70,9 +71,12 @@ def run_epoch(dataloader, model, loss_fn, optimizer, device, train=True, tracker
         model.eval()
 
     metrics = {'loss': LossMetric()}
+    start = time.time()
 
     # Print loss with tqdm
     for batch in (pbar := tqdm.tqdm(dataloader, desc='Epoch', leave=False)):
+        end = time.time()
+        print("dataloading took", end - start)
         anchors, positives, negatives = batch
         anchors = anchors.to(device)
         positives = model.tokenize(positives).to(device)
@@ -84,7 +88,10 @@ def run_epoch(dataloader, model, loss_fn, optimizer, device, train=True, tracker
                             negatives.input_ids, negatives.attention_mask)
             loss = loss_fn(*embeddings)
         else:
+            start = time.time()
             logits = model(anchors, positives.input_ids, positives.attention_mask)
+            end = time.time()
+            print("model took", end - start)
             loss = loss_fn(logits)
 
         # Backward
@@ -105,6 +112,7 @@ def run_epoch(dataloader, model, loss_fn, optimizer, device, train=True, tracker
         RUN_COUNT += 1
         pbar.set_postfix(
             {metric_name: metric_value.values[-1] for metric_name, metric_value in metrics.items()})
+        start = time.time()
 
     return {metric_name: metric_value.average for metric_name, metric_value in metrics.items()}
 
@@ -174,9 +182,11 @@ def main(args: argparse.Namespace):
     )
     # Create dummy data for testing
     # def create_dummy_data():
+    #     import string
     #     anchors = torch.randn((100, 3, 224, 224))
-    #     positives = ["This is a positive sentence"] * 100
-    #     negatives = ["This is a negative sentence"] * 100
+    #     # generate random strings
+    #     positives = ["".join(random.choices(string.ascii_letters, k=80)) for _ in range(100)]
+    #     negatives = ["".join(random.choices(string.ascii_letters, k=80)) for _ in range(100)]
     #     data = list(zip(anchors, positives, negatives))
     #     return data
 
@@ -189,7 +199,7 @@ def main(args: argparse.Namespace):
     # val_dataloader = torch.utils.data.DataLoader(
     #     create_dummy_data(),
     #     batch_size=args.batch_size,
-    #     shuffle=True,
+    #     shuffle=False,
     #     num_workers=4,
     # )
 
