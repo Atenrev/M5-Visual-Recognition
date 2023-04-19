@@ -27,10 +27,14 @@ def __parse_args() -> argparse.Namespace:
                         help='Path to the output directory.')
     parser.add_argument('--seed', type=int, default=42,
                         help='Seed for the experiment.')
+    parser.add_argument('--mode', type=str, default='image_to_text',
+                        help='Mode to use. Options: image_to_text, text_to_image.')
     # Dataset configuration
     parser.add_argument('--dataset_path', type=str, default='./datasets/COCO',
                         help='Path to the dataset.')
     # Model configuration
+    parser.add_argument('--checkpoint', type=str, default=None,
+                        help='Path to the checkpoint to load.')
     parser.add_argument('--image_encoder', type=str, default='resnet_18',
                         help='Model to use. Options: resnet_X, vgg.')
     parser.add_argument('--text_encoder', type=str, default='clip',
@@ -46,7 +50,7 @@ def __parse_args() -> argparse.Namespace:
                         help='Norm for triplet loss.')
     # Training configuration
     parser.add_argument('--optimizer', type=str, default='adam',
-                        help='Optimizer to use. Options: adam, sgd.')
+                        help='Optimizer to use. Options: adam.') # No more options, sorry
     parser.add_argument('--epochs', type=int, default=10,
                         help='Number of epochs.')
     parser.add_argument('--batch_size', type=int, default=16,
@@ -82,8 +86,9 @@ def main(args: argparse.Namespace):
         args.dataset_path,
         args.batch_size,
         inference=False,
+        mode=args.mode,
     )
-    # Create dummy data for testing
+    # Create dummy data for testing.
     # def create_dummy_data():
     #     import string
     #     anchors = torch.randn((100, 3, 224, 224))
@@ -149,14 +154,21 @@ def main(args: argparse.Namespace):
         weight_decay=args.weight_decay
     )
 
+    # Load checkpoint
+    if args.checkpoint is not None:
+        checkpoint = torch.load(args.checkpoint)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
     # Train
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device {device}")
 
     model.to(device)
 
-    train(train_dataloader, val_dataloader, model,
-          loss_fn, optimizer, device, args.epochs, tracker=tracker)
+    current_epoch = 0 if args.checkpoint is None else checkpoint['epoch']
+    train(train_dataloader, val_dataloader, model, loss_fn, 
+          optimizer, device, args.epochs, tracker=tracker, current_epoch=current_epoch)
 
 
 if __name__ == "__main__":

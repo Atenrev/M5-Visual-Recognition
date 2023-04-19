@@ -12,4 +12,6 @@ python task_a.py \
 	--image_encoder resnet_18 \
     --embedding_size 256 \
 	--batch_size 64 \
-    --epochs 20
+    --epochs 20 \
+    --lr 0.00001 \
+    --weight_decay 0.00001

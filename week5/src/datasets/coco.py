@@ -11,11 +11,7 @@ from typing import List
 from torch.utils.data import DataLoader, Dataset
 
 
-class ImageToTextCOCO(Dataset):
-    """
-    Custom dataset class for creating triplets from COCO dataset for image retrieval task with Faster R-CNN or Mask R-CNN.
-    """
-
+class BaseCOCO(Dataset):
     def __init__(self, root_path: str, caption_anns: str, transforms=None, subset: str = 'train2014'):
         """
         Args:
@@ -77,9 +73,14 @@ class ImageToTextCOCO(Dataset):
         img = img / 255.0
         return img
 
+
+class ImageToTextCOCO(BaseCOCO):
+    """
+    Custom dataset class for creating triplets from COCO dataset for image retrieval task.
+    """
+
     def __getitem__(self, idx, return_triplet: bool = True):
         img = self.load_image(idx)
-        image_id = self.image_ids[idx]
 
         if self.transforms is not None:
             img = self.transforms(img)
@@ -99,11 +100,41 @@ class ImageToTextCOCO(Dataset):
         return img, positive_caption, negative_caption
     
 
+class TextToImageCOCO(BaseCOCO):
+    """
+    Custom dataset class for creating triplets from COCO dataset for image retrieval task.
+    """
+
+    def __getitem__(self, idx, return_triplet: bool = True):
+        anchor_caption = self.captions[idx]
+
+        # Get positive image
+        positive_img = self.load_image(idx)
+
+        if self.transforms is not None:
+            positive_img = self.transforms(positive_img)
+
+        if not return_triplet:
+            return anchor_caption, positive_img
+        
+        # Get negative image
+        negative_img_idx = random.randint(0, len(self.image_paths) - 1)
+        while negative_img_idx == idx:
+            negative_img_idx = random.randint(0, len(self.image_paths) - 1)
+        negative_img = self.load_image(negative_img_idx)
+
+        if self.transforms is not None:
+            negative_img = self.transforms(negative_img)
+
+        return anchor_caption, positive_img, negative_img        
+    
+
 def create_dataloader(
         dataset_path: str,
         batch_size: int,
         inference: bool = False,
         input_size: int = 224,
+        mode: str = "image_to_text",
 ):
     """
     Creates a dataloader for the COCO dataset.
@@ -139,18 +170,34 @@ def create_dataloader(
     # )
     
     # Create dataset
-    train_dataset = ImageToTextCOCO(
-        root_path=dataset_path,
-        caption_anns=os.path.join(dataset_path, "captions_train2014.json"),
-        subset="train2014",
-        transforms=transform,
-    )
-    val_dataset = ImageToTextCOCO(
-        root_path=dataset_path,
-        caption_anns=os.path.join(dataset_path, "captions_val2014.json"),
-        subset="val2014",
-        transforms=transform,
-    )    
+    if mode == "image_to_text":
+        train_dataset = ImageToTextCOCO(
+            root_path=dataset_path,
+            caption_anns=os.path.join(dataset_path, "captions_train2014.json"),
+            subset="train2014",
+            transforms=transform,
+        )
+        val_dataset = ImageToTextCOCO(
+            root_path=dataset_path,
+            caption_anns=os.path.join(dataset_path, "captions_val2014.json"),
+            subset="val2014",
+            transforms=transform,
+        )    
+    elif mode == "text_to_image":
+        train_dataset = TextToImageCOCO(
+            root_path=dataset_path,
+            caption_anns=os.path.join(dataset_path, "captions_train2014.json"),
+            subset="train2014",
+            transforms=transform,
+        )
+        val_dataset = TextToImageCOCO(
+            root_path=dataset_path,
+            caption_anns=os.path.join(dataset_path, "captions_val2014.json"),
+            subset="val2014",
+            transforms=transform,
+        )
+    else:
+        raise ValueError(f"Invalid mode: {mode}")
 
     if not inference:
         train_dataloader = DataLoader(
