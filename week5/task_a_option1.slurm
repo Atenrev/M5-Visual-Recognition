@@ -7,6 +7,7 @@
 #SBATCH -e logs/%x_%u_%j.err # File to which STDERR will be written
 python task_b.py \
     --loss "triplet"  \
+    --output_path "outputs_task_a/" \
     --dataset_path "/home/mcv/datasets/MIT_split/" \
 	--image_encoder resnet_18 \
     --embedding_size 256 \
