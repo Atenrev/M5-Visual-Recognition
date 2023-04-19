@@ -98,9 +98,9 @@ def run_epoch(dataloader, model, loss_fn, optimizer, device, train=True, tracker
 
         # Log metrics
         if tracker is not None:
-            for metric in metrics.values():
+            for i, metric in enumerate(metrics.values()):
                 tracker.add_batch_metric(
-                    metric.name, metric.values[-1], RUN_COUNT, commit=False)
+                    metric.name, metric.values[-1], RUN_COUNT, commit=i == len(metrics) - 1)
 
         RUN_COUNT += 1
         pbar.set_postfix(
