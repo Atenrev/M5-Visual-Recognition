@@ -93,13 +93,13 @@ def create_dataloader(
     train_coco_dataset = CocoDetection(
         root=os.path.join(dataset_path, "train2014"),
         annFile=os.path.join(dataset_path, "instances_train2014.json"),
-        transforms=lambda x, _: (transform(x), None),
+        transforms=lambda x, t: (transform(x), t),
     )
 
     val_coco_dataset = CocoDetection(
         root=os.path.join(dataset_path, "val2014"),
         annFile=os.path.join(dataset_path, "instances_val2014.json"),
-        transforms=lambda x, _: (transform(x), None),
+        transforms=lambda x, t: (transform(x), t),
     )
     
     # Create dataset
