@@ -32,19 +32,33 @@ class ImageToTextCOCO(Dataset):
             self.caption_anns = json.load(f)["annotations"]
 
         image_with_caption = [caption['image_id'] for caption in self.caption_anns]
-        self.image_paths: List[str] = []
-        self.image_ids: List[int] = []
-        
-        for image_id in tqdm(os.listdir(os.path.join(root_path, subset))):
-            # If image_id is not in caption_anns, then it is not a valid image
-            image_id_int = int(image_id.split('.')[0].split('_')[-1])
 
-            if image_id_int not in image_with_caption:
-                continue
+        # Check if image_paths and image_ids are in cache. If so, load them.
+        if os.path.exists(os.path.join("cache", f"{subset}_image_paths.npy")):
+            print("Loading image_paths and image_ids from cache...")
+            self.image_paths = np.load(os.path.join("cache", f"{subset}_image_paths.npy"), allow_pickle=True).tolist()
+            self.image_ids = np.load(os.path.join("cache", f"{subset}_image_ids.npy"), allow_pickle=True).tolist()
+        else:
+            print("Creating image_paths and image_ids...")
+            self.image_paths: List[str] = []
+            self.image_ids: List[int] = []
+            
+            for image_id in tqdm(os.listdir(os.path.join(root_path, subset))):
+                # If image_id is not in caption_anns, then it is not a valid image
+                image_id_int = int(image_id.split('.')[0].split('_')[-1])
 
-            self.image_paths.append(os.path.join(root_path, subset, image_id))
-            self.image_ids.append(image_id_int)
+                if image_id_int not in image_with_caption:
+                    continue
 
+                self.image_paths.append(os.path.join(root_path, subset, image_id))
+                self.image_ids.append(image_id_int)
+
+            # Save image_paths and image_ids to cache
+            os.makedirs("cache", exist_ok=True)
+            np.save(os.path.join("cache", f"{subset}_image_paths.npy"), self.image_paths)
+            np.save(os.path.join("cache", f"{subset}_image_ids.npy"), self.image_ids)
+
+        print(f"Loaded {len(self.image_paths)} images from COCO {subset} dataset.")
         self.transforms = transforms
 
     def __len__(self):
