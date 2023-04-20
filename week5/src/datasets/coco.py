@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, Dataset
 
 
 class BaseCOCO(Dataset):
-    def __init__(self, root_path: str, caption_anns: str, transforms=None, subset: str = 'train2014'):
+    def __init__(self, root_path: str, caption_anns: str, transforms=None, subset: str = 'train2014', test_mode: bool = False):
         """
         Args:
             root_path (str): Path to the COCO dataset.
@@ -61,6 +61,13 @@ class BaseCOCO(Dataset):
             np.save(os.path.join("cache", f"{subset}_captions.npy"), self.captions)
 
         print(f"Loaded {len(self.image_paths)} images from COCO {subset} dataset.")
+
+        if test_mode:
+            print("Using only 100 images for testing...")
+            self.image_paths = self.image_paths[:100]
+            self.image_ids = self.image_ids[:100]
+            self.captions = self.captions[:100]
+
         self.transforms = transforms
 
     def __len__(self):
@@ -135,6 +142,7 @@ def create_dataloader(
         inference: bool = False,
         input_size: int = 224,
         mode: str = "image_to_text",
+        test_mode: bool = False,
 ):
     """
     Creates a dataloader for the COCO dataset.
@@ -176,12 +184,14 @@ def create_dataloader(
             caption_anns=os.path.join(dataset_path, "captions_train2014.json"),
             subset="train2014",
             transforms=transform,
+            test_mode=test_mode,
         )
         val_dataset = ImageToTextCOCO(
             root_path=dataset_path,
             caption_anns=os.path.join(dataset_path, "captions_val2014.json"),
             subset="val2014",
             transforms=transform,
+            test_mode=test_mode,
         )    
     elif mode == "text_to_image":
         train_dataset = TextToImageCOCO(
@@ -189,12 +199,14 @@ def create_dataloader(
             caption_anns=os.path.join(dataset_path, "captions_train2014.json"),
             subset="train2014",
             transforms=transform,
+            test_mode=test_mode,
         )
         val_dataset = TextToImageCOCO(
             root_path=dataset_path,
             caption_anns=os.path.join(dataset_path, "captions_val2014.json"),
             subset="val2014",
             transforms=transform,
+            test_mode=test_mode,
         )
     else:
         raise ValueError(f"Invalid mode: {mode}")

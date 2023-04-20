@@ -54,9 +54,6 @@ def run_epoch(dataloader, model, device):
 
     # Print loss with tqdm
     for i, batch in tqdm.tqdm(enumerate(dataloader), desc='Epoch', leave=False):
-        if i == 100:
-            break
-        
         anchors, positives, _ = batch
         anchors = anchors.to(device)
         positives = model.tokenize(positives).to(device)
@@ -127,7 +124,9 @@ def main(args: argparse.Namespace):
 
     model.to(device)
 
-    image_embeddings, text_embeddings = run_epoch(val_dataloader, model, device)
+    with torch.no_grad():
+        image_embeddings, text_embeddings = run_epoch(val_dataloader, model, device)
+
     plot_both_embeddings(image_embeddings, text_embeddings)
 
 
