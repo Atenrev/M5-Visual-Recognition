@@ -3,6 +3,7 @@ import cv2
 import json
 import torch
 import random
+import warnings
 import numpy as np
 import torchvision.transforms as transforms
 
@@ -47,7 +48,11 @@ class BaseCOCO(Dataset):
 
                 # Each image can have up to 5 captions. Get all captions for the image.
                 caption_idxs = [i for i, x in enumerate(image_with_caption) if x==image_id_int]
-                assert 1 <= len(caption_idxs) <= 5, f"Image {image_id} should have between 1 and 5 captions, but has {len(caption_idxs)} captions."
+                if len(caption_idxs) == 0:
+                    raise ValueError(f"Image {image_id} does not have any captions!")
+                elif len(caption_idxs) > 5:
+                    warnings.warn(f"Image {image_id} should have between 1 and 5 captions, but has {len(caption_idxs)} captions! Taking first 5 captions.")
+                    caption_idxs = caption_idxs[:5]
 
                 for caption_idx in caption_idxs:
                     self.image_paths.append(os.path.join(root_path, subset, image_id))
