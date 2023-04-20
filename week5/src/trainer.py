@@ -94,7 +94,7 @@ class Runner:
                 self.optimizer.step()
 
             # Metrics
-            self.metrics['loss'].update(loss.item())                
+            self.metrics['loss'].update(loss.item())
 
             if self.tracker is not None:
                 for i, metric in enumerate(self.metrics.values()):

@@ -18,7 +18,7 @@ from src.datasets.dummy import create_dataloader as create_dummy_dataloader
 
 def __parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='MCV-M5-Project, week 4, tasks b and c. Team 1'
+        description='MCV-M5-Project, week 5, task a. Team 1'
     )
 
     # General configuration

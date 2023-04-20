@@ -9,8 +9,8 @@ from tqdm import tqdm
 from sklearn.preprocessing import label_binarize
 
 from src.metrics import (
-    calculate_mean_average_precision, 
-    calculate_top_k_accuracy, 
+    calculate_mean_average_precision,
+    calculate_top_k_accuracy,
 )
 from src.methods.annoyers import Annoyer
 from src.models.resnet import ResNetWithEmbedder
@@ -185,7 +185,7 @@ def main(args: argparse.Namespace):
 
     with torch.no_grad():
         mavep, mavep25, top_1_acc, top_5_acc, top_10_acc = run_experiment(
-            train_dataloader, val_dataloader, model, 
+            train_dataloader, val_dataloader, model,
             args.embedding_size, args.n_neighbors, experiment_name=experiment_name)
         
     with open(os.path.join(args.checkpoint, "../", "results.txt"), "w") as f:

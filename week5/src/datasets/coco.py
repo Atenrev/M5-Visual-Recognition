@@ -23,7 +23,7 @@ class BaseCOCO(Dataset):
         print(f"Loading COCO {subset} dataset...")
 
         with open(caption_anns, 'r') as f:
-            # Format of the json file: 
+            # Format of the json file:
             # [{’image_id’: 318556, ’id’: 48, ’caption’: ’A very clean and well…’}, ...]
             caption_anns = json.load(f)["annotations"]
 
@@ -40,19 +40,19 @@ class BaseCOCO(Dataset):
             self.image_paths: List[str] = []
             self.image_ids: List[int] = []
             self.captions: List[str] = []
-            
+
             for image_id in tqdm(os.listdir(os.path.join(root_path, subset))):
                 # If image_id is not in caption_anns, then it is not a valid image
                 image_id_int = int(image_id.split('.')[0].split('_')[-1])
 
-                try:
-                    caption_idx = image_with_caption.index(image_id_int)
-                except ValueError:
-                    continue
+                # Each image can have up to 5 captions. Get all captions for the image.
+                caption_idxs = [i for i, x in enumerate(image_with_caption) if x==image_id_int]
+                assert 1 <= len(caption_idxs) <= 5, f"Image {image_id} should have between 1 and 5 captions, but has {len(caption_idxs)} captions."
 
-                self.image_paths.append(os.path.join(root_path, subset, image_id))
-                self.image_ids.append(image_id_int)
-                self.captions.append(caption_anns[caption_idx]['caption'])
+                for caption_idx in caption_idxs:
+                    self.image_paths.append(os.path.join(root_path, subset, image_id))
+                    self.image_ids.append(image_id_int)
+                    self.captions.append(caption_anns[caption_idx]['caption'])
 
             # Save image_paths, image_ids and captions to cache
             os.makedirs("cache", exist_ok=True)
@@ -72,7 +72,7 @@ class BaseCOCO(Dataset):
 
     def __len__(self):
         return len(self.image_paths)
-    
+
     def load_image(self, idx):
         img = cv2.imread(self.image_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -91,7 +91,7 @@ class ImageToTextCOCO(BaseCOCO):
 
         if self.transforms is not None:
             img = self.transforms(img)
-        
+
         # Get image caption (positive caption)
         positive_caption = self.captions[idx]
 
@@ -105,7 +105,7 @@ class ImageToTextCOCO(BaseCOCO):
         negative_caption = self.captions[negative_caption_idx]
 
         return img, positive_caption, negative_caption
-    
+
 
 class TextToImageCOCO(BaseCOCO):
     """
@@ -123,7 +123,7 @@ class TextToImageCOCO(BaseCOCO):
 
         if not return_triplet:
             return anchor_caption, positive_img
-        
+
         # Get negative image
         negative_img_idx = random.randint(0, len(self.image_paths) - 1)
         while negative_img_idx == idx:
@@ -133,7 +133,7 @@ class TextToImageCOCO(BaseCOCO):
         if self.transforms is not None:
             negative_img = self.transforms(negative_img)
 
-        return anchor_caption, positive_img, negative_img        
+        return anchor_caption, positive_img, negative_img
     
 
 def create_dataloader(

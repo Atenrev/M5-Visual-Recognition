@@ -1,6 +1,6 @@
 import torch
 import torchvision
-    
+
 
 class ResNetWithEmbedder(torch.nn.Module):
     def __init__(self, resnet='18', pretrained=True, embed_size: int = 256):

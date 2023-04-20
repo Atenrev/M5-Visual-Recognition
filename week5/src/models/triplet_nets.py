@@ -7,7 +7,7 @@ from transformers.tokenization_utils_base import BatchEncoding
 from dataclasses import dataclass
 
 from src.losses import SymmetricCrossEntropyLoss
-    
+
 
 @dataclass
 class TripletOutput:
@@ -32,7 +32,7 @@ class TripletModel(torch.nn.Module):
 
     def tokenize(self, text: List[str]) -> BatchEncoding:
         return self.text_encoder.tokenizer_encode_text(text)
-    
+
     def forward(self, *args, **kwargs) -> TripletOutput:
         raise NotImplementedError()
 
@@ -42,8 +42,8 @@ class ImageToTextTripletModel(TripletModel):
         super().__init__(image_encoder, text_encoder, args)
 
     def forward(
-            self, 
-            anchor_image: torch.Tensor, 
+            self,
+            anchor_image: torch.Tensor,
             positive_input_ids: torch.Tensor,
             positive_attention_mask: torch.Tensor,
             negative_input_ids: torch.Tensor,
@@ -59,7 +59,7 @@ class ImageToTextTripletModel(TripletModel):
             positive_embedding=positive_text_embedding,
             negative_embedding=negative_text_embedding,
         )
-    
+
 
 class TextToImageTripletModel(TripletModel):
     def __init__(self, image_encoder: torch.nn.Module, text_encoder: torch.nn.Module, args):
@@ -96,7 +96,7 @@ class SymmetricSiameseModel(torch.nn.Module):
         return self.text_encoder.tokenizer_encode_text(text)
 
     def forward(
-            self, 
+            self,
             anchor_image: torch.Tensor, 
             text_input_ids: torch.Tensor,
             text_attention_mask: torch.Tensor,
