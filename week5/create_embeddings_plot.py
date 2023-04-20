@@ -6,7 +6,7 @@ import numpy as np
 
 
 from src.embedding_viz import plot_both_embeddings
-from src.models.triplet_nets import ImageToTextTripletModel, ImageToTextWithTempModel
+from src.models.triplet_nets import ImageToTextTripletModel, SymmetricSiameseModel
 from src.models.resnet import ResNetWithEmbedder
 from src.models.bert_text_encoder import BertTextEncoder
 from src.models.clip_text_encoder import CLIPTextEncoder
@@ -115,7 +115,7 @@ def main(args: argparse.Namespace):
         raise ValueError(f"Unknown text encoder {args.text_encoder}")
 
     if args.model == 'image_to_text_with_temp':
-        model = ImageToTextWithTempModel(
+        model = SymmetricSiameseModel(
             image_encoder,
             text_encoder,
         )

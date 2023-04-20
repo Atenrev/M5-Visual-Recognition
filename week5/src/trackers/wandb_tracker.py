@@ -7,6 +7,7 @@ import wandb
 from pathlib import Path
 from typing import List, Tuple
 
+from src.embedding_viz import plot_both_embeddings
 from src.trackers.tracker import Stage, ExperimentTracker
 
 
@@ -32,9 +33,9 @@ class WandbTracker(ExperimentTracker):
                               entity="m5-group1",  
                               config=config,
                               tags=tags)
-        log_dir, self.models_dir = create_experiment_dir(
+        self.log_dir, self.models_dir = create_experiment_dir(
             root=log_path, experiment_name=experiment_name)
-        self._validate_log_dir(log_dir, create=True)
+        self._validate_log_dir(self.log_dir, create=True)
 
         wandb.define_metric("batch_step")
         wandb.define_metric("epoch")
@@ -68,6 +69,11 @@ class WandbTracker(ExperimentTracker):
             'optimizer_state_dict': optimizer.state_dict(),
         }, save_path)
         wandb.run.summary["best_epoch"] = epoch + 1
+
+    def plot_embeddings(self, image_embeddings: np.ndarray, text_embeddings: np.ndarray, epoch: int):
+        output_path = os.path.join(self.log_dir, "plots", "embeds", f"both_epoch_{epoch + 1}.png")
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        plot_both_embeddings(image_embeddings, text_embeddings, output_path)
 
     def add_batch_metric(self, name: str, value: float, step: int, commit: bool = True):
         wandb.log({f"{self.stage.name}/batch_{name}": value, "batch_step": step}, commit=commit)

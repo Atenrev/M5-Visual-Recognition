@@ -1,4 +1,3 @@
-import tqdm
 import torch
 import random
 import argparse
@@ -7,14 +6,14 @@ import matplotlib
 
 from datetime import datetime
 
-from src.losses import SymmetricCrossEntropyLoss
 from src.trainer import train
 from src.trackers.wandb_tracker import WandbTracker
-from src.models.triplet_nets import ImageToTextTripletModel, ImageToTextWithTempModel
+from src.models.triplet_nets import ImageToTextTripletModel, TextToImageTripletModel, SymmetricSiameseModel
 from src.models.resnet import ResNetWithEmbedder
 from src.models.bert_text_encoder import BertTextEncoder
 from src.models.clip_text_encoder import CLIPTextEncoder
 from src.datasets.coco import create_dataloader as create_coco_dataloader
+from src.datasets.dummy import create_dataloader as create_dummy_dataloader
 
 
 def __parse_args() -> argparse.Namespace:
@@ -27,8 +26,8 @@ def __parse_args() -> argparse.Namespace:
                         help='Path to the output directory.')
     parser.add_argument('--seed', type=int, default=42,
                         help='Seed for the experiment.')
-    parser.add_argument('--mode', type=str, default='image_to_text',
-                        help='Mode to use. Options: image_to_text, text_to_image.')
+    parser.add_argument('--mode', type=str, default='symmetric',
+                        help='Mode to use. Options: image_to_text, text_to_image, symmetric.')
     # Dataset configuration
     parser.add_argument('--dataset_path', type=str, default='./datasets/COCO',
                         help='Path to the dataset.')
@@ -42,8 +41,8 @@ def __parse_args() -> argparse.Namespace:
     parser.add_argument('--embedding_size', type=int, default=256,
                         help='Size of the embedding vector.')
     # Loss configuration
-    parser.add_argument('--loss', type=str, default='symmetric',
-                        help='Loss function to use. Options: triplet, symmetric.')
+    # parser.add_argument('--loss', type=str, default='symmetric',
+    #                     help='Loss function to use. Options: triplet, symmetric.')
     parser.add_argument('--triplet_margin', type=float, default=0.05,
                         help='Margin for triplet loss.')
     parser.add_argument('--triplet_norm', type=int, default=2,
@@ -73,7 +72,7 @@ def main(args: argparse.Namespace):
     # Build config dict from args
     config = vars(args)
     config["metrics"] = ["accuracy"]
-    experiment_name = f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+    experiment_name = f"{args.mode}_{args.image_encoder}_{args.text_encoder}_embed{args.embedding_size}_lr{args.lr}_wd{args.weight_decay}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     tracker = WandbTracker(
         log_path="outputs_w5_task_a",
         experiment_name=experiment_name,
@@ -89,41 +88,7 @@ def main(args: argparse.Namespace):
         mode=args.mode,
     )
     # Create dummy data for testing.
-    # def create_dummy_data():
-    #     import string
-    #     anchors = torch.randn((100, 3, 224, 224))
-    #     # generate random strings
-    #     positives = ["".join(random.choices(string.ascii_letters, k=80))
-    #                  for _ in range(100)]
-    #     negatives = ["".join(random.choices(string.ascii_letters, k=80))
-    #                  for _ in range(100)]
-    #     data = list(zip(anchors, positives, negatives))
-    #     return data
-
-    # train_dataloader = torch.utils.data.DataLoader(
-    #     create_dummy_data(),
-    #     batch_size=args.batch_size,
-    #     shuffle=True,
-    #     num_workers=4,
-    # )
-    # val_dataloader = torch.utils.data.DataLoader(
-    #     create_dummy_data(),
-    #     batch_size=args.batch_size,
-    #     shuffle=False,
-    #     num_workers=4,
-    # )
-
-    # Create loss
-    print(f"Using loss {args.loss}")
-    if args.loss == 'triplet':
-        loss_fn = torch.nn.TripletMarginLoss(
-            margin=args.triplet_margin,
-            p=args.triplet_norm
-        )
-    elif args.loss == 'symmetric':
-        loss_fn = SymmetricCrossEntropyLoss()
-    else:
-        raise ValueError(f"Unknown loss {args.loss}")
+    # train_dataloader, val_dataloader, _ = create_dummy_dataloader(args)
 
     # Create model
     # Remember to make sure both models project to the same embedding space
@@ -136,16 +101,26 @@ def main(args: argparse.Namespace):
     else:
         raise ValueError(f"Unknown text encoder {args.text_encoder}")
 
-    if args.loss == 'symmetric':
-        model = ImageToTextWithTempModel(
+    if args.mode == 'symmetric':
+        model = SymmetricSiameseModel(
             image_encoder,
             text_encoder,
+            args,
         )
-    else:
+    elif args.mode == 'image_to_text':
         model = ImageToTextTripletModel(
             image_encoder,
             text_encoder,
+            args
         )
+    elif args.mode == 'text_to_image':
+        model = TextToImageTripletModel(
+            image_encoder,
+            text_encoder,
+            args
+        )
+    else:
+        raise ValueError(f"Unknown mode {args.mode}")
 
     # Create optimizer
     optimizer = torch.optim.Adam(
@@ -155,6 +130,7 @@ def main(args: argparse.Namespace):
     )
 
     # Load checkpoint
+    checkpoint = None
     if args.checkpoint is not None:
         checkpoint = torch.load(args.checkpoint)
         model.load_state_dict(checkpoint['model_state_dict'])
@@ -166,9 +142,9 @@ def main(args: argparse.Namespace):
 
     model.to(device)
 
-    current_epoch = 0 if args.checkpoint is None else checkpoint['epoch']
-    train(train_dataloader, val_dataloader, model, loss_fn, 
-          optimizer, device, args.epochs, tracker=tracker, current_epoch=current_epoch)
+    current_epoch = 0 if checkpoint is None else checkpoint['epoch']
+    train(train_dataloader, val_dataloader, model, optimizer, 
+          device, args.epochs, tracker=tracker, current_epoch=current_epoch)
 
 
 if __name__ == "__main__":

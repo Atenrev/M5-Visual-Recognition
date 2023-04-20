@@ -170,7 +170,7 @@ def create_dataloader(
     # )
     
     # Create dataset
-    if mode == "image_to_text":
+    if mode == "image_to_text" or mode == "symmetric":
         train_dataset = ImageToTextCOCO(
             root_path=dataset_path,
             caption_anns=os.path.join(dataset_path, "captions_train2014.json"),

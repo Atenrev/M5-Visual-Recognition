@@ -31,6 +31,9 @@ class ExperimentTracker(Protocol):
     ):
         """Implements logging a confusion matrix at epoch-level."""
 
+    def plot_embeddings(self, image_embeddings: np.ndarray, text_embeddings: np.ndarray, epoch: int):
+        """Implements logging embeddings."""
+
     def flush(self):
         """Implements flushing the experiment tracker."""
 
