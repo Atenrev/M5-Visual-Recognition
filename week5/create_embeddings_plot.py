@@ -53,7 +53,10 @@ def run_epoch(dataloader, model, device):
     text_embeddings_list = []
 
     # Print loss with tqdm
-    for batch in tqdm.tqdm(dataloader, desc='Epoch', leave=False):
+    for i, batch in tqdm.tqdm(enumerate(dataloader), desc='Epoch', leave=False):
+        if i == 100:
+            break
+        
         anchors, positives, _ = batch
         anchors = anchors.to(device)
         positives = model.tokenize(positives).to(device)
