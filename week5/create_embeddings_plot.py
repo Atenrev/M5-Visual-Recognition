@@ -32,7 +32,7 @@ def __parse_args() -> argparse.Namespace:
     # Model configuration
     parser.add_argument('--checkpoint', type=str, default="./checkpoints/epoch_1.pt",
                         help='Path to the checkpoint to load.')
-    parser.add_argument('--model', type=str, default='symmetric',
+    parser.add_argument('--mode', type=str, default='symmetric',
                         help='Mode to use. Options: image_to_text, text_to_image, symmetric.')
     parser.add_argument('--image_encoder', type=str, default='resnet_18',
                         help='Image Encoder to use. Options: resnet_X, vgg.')
@@ -81,7 +81,7 @@ def main(args: argparse.Namespace):
         inference=False,
     )
     # Create dummy data for testing
-    val_dataloader = create_dummy_dataloader(args)
+    # val_dataloader = create_dummy_dataloader(args)
 
     # Create model
     # Remember to make sure both models project to the same embedding space
@@ -94,26 +94,26 @@ def main(args: argparse.Namespace):
     else:
         raise ValueError(f"Unknown text encoder {args.text_encoder}")
 
-    if args.model == 'symmetric':
+    if args.mode == 'symmetric':
         model = SymmetricSiameseModel(
             image_encoder,
             text_encoder,
             args,
         )
-    elif args.model == 'image_to_text':
+    elif args.mode == 'image_to_text':
         model = ImageToTextTripletModel(
             image_encoder,
             text_encoder,
             args
         )
-    elif args.model == 'text_to_image':
+    elif args.mode == 'text_to_image':
         model = TextToImageTripletModel(
             image_encoder,
             text_encoder,
             args
         )
     else:
-        raise ValueError(f"Unknown mode {args.model}")
+        raise ValueError(f"Unknown mode {args.mode}")
 
     checkpoint = torch.load(args.checkpoint)
     model.load_state_dict(checkpoint['model_state_dict'])
