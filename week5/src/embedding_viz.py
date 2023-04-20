@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import umap
@@ -6,6 +7,7 @@ from sklearn.manifold import TSNE
 
 
 def plot_both_embeddings(image_embeddings, text_embeddings, output_path: str = "plots/both_embeddings.png"):
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     # Concatenate the two sets of embeddings
     embeddings = np.concatenate((image_embeddings, text_embeddings), axis=0)
 
