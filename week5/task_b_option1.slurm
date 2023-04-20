@@ -7,7 +7,7 @@
 #SBATCH -e logs/%x_%u_%j.err # File to which STDERR will be written
 python task_a.py \
     --mode text_to_image \
-    --output_path "outputs_task_a/" \
+    --output_path "outputs_task_b/" \
     --dataset_path "/home/mcv/datasets/COCO/" \
 	--image_encoder resnet_18 \
     --text_encoder clip \
