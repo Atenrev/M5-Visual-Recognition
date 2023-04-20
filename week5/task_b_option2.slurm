@@ -6,7 +6,7 @@
 #SBATCH -o logs/%x_%u_%j.out # File to which STDOUT will be written
 #SBATCH -e logs/%x_%u_%j.err # File to which STDERR will be written
 python task_a.py \
-    --mode symmetric \
+    --mode text_to_image \
     --output_path "outputs_task_a/" \
     --dataset_path "/home/mcv/datasets/COCO/" \
 	--image_encoder resnet_18 \
