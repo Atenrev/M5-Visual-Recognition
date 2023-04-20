@@ -6,10 +6,12 @@ import numpy as np
 
 
 from src.embedding_viz import plot_both_embeddings
-from src.models.triplet_nets import ImageToTextTripletModel, SymmetricSiameseModel
+from src.models.triplet_nets import ImageToTextTripletModel, SymmetricSiameseModel, TextToImageTripletModel
 from src.models.resnet import ResNetWithEmbedder
 from src.models.bert_text_encoder import BertTextEncoder
 from src.models.clip_text_encoder import CLIPTextEncoder
+from src.datasets.coco import create_dataloader as create_coco_dataloader
+from src.datasets.dummy import create_dataloader as create_dummy_dataloader
 
 
 def __parse_args() -> argparse.Namespace:
@@ -30,12 +32,12 @@ def __parse_args() -> argparse.Namespace:
     # Model configuration
     parser.add_argument('--checkpoint', type=str, default="./checkpoints/epoch_1.pt",
                         help='Path to the checkpoint to load.')
-    parser.add_argument('--model', type=str, default='image_to_text_triplet',
-                        help='Model to use. Options: image_to_text_triplet, image_to_text_with_temp.')
+    parser.add_argument('--model', type=str, default='symmetric',
+                        help='Mode to use. Options: image_to_text, text_to_image, symmetric.')
     parser.add_argument('--image_encoder', type=str, default='resnet_18',
-                        help='Model to use. Options: resnet_X, vgg.')
+                        help='Image Encoder to use. Options: resnet_X, vgg.')
     parser.add_argument('--text_encoder', type=str, default='clip',
-                        help='Model to use. Options: clip, bert.')
+                        help='Text Encoder to use. Options: clip, bert.')
     parser.add_argument('--embedding_size', type=int, default=256,
                         help='Size of the embedding vector.')
 
@@ -73,35 +75,13 @@ def main(args: argparse.Namespace):
     random.seed(args.seed)
 
     # Load data
-    # train_dataloader, val_dataloader, _ = create_coco_dataloader(
-    #     args.dataset_path,
-    #     args.batch_size,
-    #     inference=False,
-    # )
+    _, val_dataloader, _ = create_coco_dataloader(
+        args.dataset_path,
+        args.batch_size,
+        inference=False,
+    )
     # Create dummy data for testing
-    def create_dummy_data():
-        import string
-        anchors = torch.randn((100, 3, 224, 224))
-        # generate random strings
-        positives = ["".join(random.choices(string.ascii_letters, k=80))
-                     for _ in range(100)]
-        negatives = ["".join(random.choices(string.ascii_letters, k=80))
-                     for _ in range(100)]
-        data = list(zip(anchors, positives, negatives))
-        return data
-
-    train_dataloader = torch.utils.data.DataLoader(
-        create_dummy_data(),
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=4,
-    )
-    val_dataloader = torch.utils.data.DataLoader(
-        create_dummy_data(),
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=4,
-    )
+    val_dataloader = create_dummy_dataloader(args)
 
     # Create model
     # Remember to make sure both models project to the same embedding space
@@ -114,18 +94,26 @@ def main(args: argparse.Namespace):
     else:
         raise ValueError(f"Unknown text encoder {args.text_encoder}")
 
-    if args.model == 'image_to_text_with_temp':
+    if args.model == 'symmetric':
         model = SymmetricSiameseModel(
             image_encoder,
             text_encoder,
+            args,
         )
-    elif args.model == 'image_to_text_triplet':
+    elif args.model == 'image_to_text':
         model = ImageToTextTripletModel(
             image_encoder,
             text_encoder,
+            args
+        )
+    elif args.model == 'text_to_image':
+        model = TextToImageTripletModel(
+            image_encoder,
+            text_encoder,
+            args
         )
     else:
-        raise ValueError(f"Unknown model {args.model}")
+        raise ValueError(f"Unknown mode {args.model}")
 
     checkpoint = torch.load(args.checkpoint)
     model.load_state_dict(checkpoint['model_state_dict'])
