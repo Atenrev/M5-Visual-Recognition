@@ -13,6 +13,6 @@ python task_a.py \
     --text_encoder clip \
     --embedding_size 256 \
 	--batch_size 64 \
-    --epochs 20 \
+    --epochs 10 \
     --lr 0.00001 \
     --weight_decay 0.00001
