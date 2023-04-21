@@ -11,4 +11,4 @@ python run_retrieval.py \
     --image_encoder resnet_18 \
     --text_encoder clip \
     --embedding_size 256 \
-    --checkpoint "outputs_w5_task_a/image_to_text_resnet_18_clip_embed256_lr5e-05_wd1e-05_20230421_003046/models/epoch_8.pt"
+    --checkpoint "outputs_w5_task_a/image_to_text_resnet_18_clip_embed256_lr5e-05_wd1e-05_20230421_003046/models/epoch_15.pt"
