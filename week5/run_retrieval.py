@@ -78,7 +78,7 @@ def run_experiment(
 
     # Metrics
     mavep, mavep25 = [], []
-    top_1_acc, top_5_acc, top_10_acc = []
+    top_1_acc, top_5_acc, top_10_acc = [], [], []
 
     seen_images = set()
     for idx in tqdm(range(len(dataloader.dataset))):
