@@ -43,6 +43,11 @@ def __parse_args() -> argparse.Namespace:
                         help='Text Encoder to use. Options: clip, bert.')
     parser.add_argument('--embedding_size', type=int, default=256,
                         help='Size of the embedding vector.')
+    # Loss configuration
+    parser.add_argument('--triplet_margin', type=float, default=0.05,
+                        help='Margin for triplet loss.')
+    parser.add_argument('--triplet_norm', type=int, default=2,
+                        help='Norm for triplet loss.')
 
     args = parser.parse_args()
     return args
