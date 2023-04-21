@@ -44,7 +44,7 @@ class Annoyer:
             if type(anchors[0]) == str:  # Text2Image
                 positives = positives.to(self.device)
             else:  # Image2Text
-                positives = self.model.tokenize(positives).to(self.device)
+                positives = self.embedder.tokenize(positives).to(self.device)
 
             with torch.no_grad():
                 if type(anchors[0]) == str:  # Text2Image
