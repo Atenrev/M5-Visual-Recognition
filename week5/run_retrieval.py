@@ -75,6 +75,7 @@ def run_experiment(
     mavep, mavep25 = [], []
     top_1_acc, top_5_acc, top_10_acc = []
 
+    seen_images = set()
     for idx in tqdm(range(len(dataloader.dataset))):
         anchor, _, _ = dataloader.dataset[idx]
 
@@ -83,6 +84,9 @@ def run_experiment(
             anchor = embedder_query.tokenize(anchor).to(device)
             V = embedder_query(anchor.input_ids, anchor.attention_mask).squeeze()
         else:  # Image2Text
+            if dataloader.dataset.image_paths[idx] in seen_images:
+                continue
+            seen_images.add(dataloader.dataset.image_paths[idx])
             anchor = anchor.to(device)
             V = embedder_query(anchor).squeeze()
 
