@@ -83,7 +83,7 @@ def run_experiment(
     seen_images = set()
     for idx in tqdm(range(len(dataloader.dataset))):
         anchor, _, _ = dataloader.dataset[idx]
-
+        anchor = anchor.unsqueeze(0)
         print("anchor.shape ", anchor.shape)
         if type(anchor[0]) == str:  # Text2Image
             anchor = embedder_query.tokenize(anchor).to(device)
