@@ -30,6 +30,10 @@ def __parse_args() -> argparse.Namespace:
     # Dataset configuration
     parser.add_argument('--dataset_path', type=str, default='./datasets/COCO',
                         help='Path to the dataset.')
+    parser.add_argument('--dataset_percentage', type=float, default=1.0,
+                        help='Percentage of the dataset to use.')
+    parser.add_argument('--random_subset', type=bool, default=False,
+                        help='Whether to use a random subset of the dataset.')
     # Model configuration
     parser.add_argument('--checkpoint', type=str, default=None,
                         help='Path to the checkpoint to load.')
@@ -85,6 +89,8 @@ def main(args: argparse.Namespace):
         args.batch_size,
         inference=False,
         mode=args.mode,
+        percentage=args.dataset_percentage,
+        random_subset=args.random_subset,
     )
     # Create dummy data for testing.
     # train_dataloader, val_dataloader, _ = create_dummy_dataloader(args)
