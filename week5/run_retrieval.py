@@ -37,8 +37,6 @@ def __parse_args() -> argparse.Namespace:
     # Model
     parser.add_argument('--checkpoint', type=str, required=True,
                         help='Path to the checkpoint to load.')
-    parser.add_argument('--mode', type=str, required=True,
-                        help='Mode to use. Options: image_to_text, text_to_image, symmetric.')
     parser.add_argument('--image_encoder', type=str, required=True,
                         help='Image Encoder to use. Options: resnet_X, vgg.')
     parser.add_argument('--text_encoder', type=str, required=True,
