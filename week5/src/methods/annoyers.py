@@ -51,7 +51,7 @@ class Annoyer:
                     embed = self.embedder(positives).cpu().numpy()
                 else:  # Image2Text
                     embed = self.embedder(positives.input_ids, positives.attention_mask).cpu().numpy()
-
+            embed = embed.squeeze()
             self.trees.add_item(idx, embed)
 
         self.trees.build(10)
