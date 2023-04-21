@@ -36,7 +36,7 @@ class Annoyer:
         else:
             self.state_variables['built'] = True
 
-        for idx, batch in enumerate(pbar := tqdm.tqdm(self.dataloader, desc='Building KNN (Annoyer)....', leave=False)):
+        for idx, batch in enumerate(pbar := tqdm(self.dataloader, desc='Building KNN (Annoyer)....', leave=False)):
             batch_size = len(batch[0])
             assert batch_size == 1, f'Annoyer KNN only supports batch_size = 1. Found: {batch_size}'
             anchors, positives, _ = batch
