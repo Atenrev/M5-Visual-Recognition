@@ -195,7 +195,7 @@ def main(args: argparse.Namespace):
             args.embedding_size, args.mode, args.n_neighbors,
             experiment_name=experiment_name
         )
-        with open(os.path.join(args.checkpoint, "../", "results.txt"), "w") as f:
+        with open(os.path.join(os.path.dirname(args.checkpoint), "results.txt"), "w") as f:
             f.write(f"mAveP@50: {mavep}\n")
             f.write(f"mAveP@25: {mavep25}\n")
             f.write(f"top_1 - precision: {top_1_acc}\n")
@@ -211,7 +211,7 @@ def main(args: argparse.Namespace):
                 experiment_name=experiment_name
             )
 
-            with open(os.path.join(args.checkpoint, "../", "results_text_to_image.txt"), "w") as f:
+            with open(os.path.join(os.path.dirname(args.checkpoint), "results_text_to_image.txt"), "w") as f:
                 f.write(f"mAveP@50: {mavep}\n")
                 f.write(f"mAveP@25: {mavep25}\n")
                 f.write(f"top_1 - precision: {top_1_acc}\n")
