@@ -13,12 +13,11 @@ from src.models.resnet import ResNetWithEmbedder
 from src.models.bert_text_encoder import BertTextEncoder
 from src.models.clip_text_encoder import CLIPTextEncoder
 from src.datasets.coco import create_dataloader as create_coco_dataloader
-from src.datasets.dummy import create_dataloader as create_dummy_dataloader
 
 
 def __parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='MCV-M5-Project, week 4, tasks b and c. Team 1'
+        description='MCV-M5-Project, week 5, task a. Team 1'
     )
 
     # General configuration
@@ -143,7 +142,7 @@ def main(args: argparse.Namespace):
     model.to(device)
 
     current_epoch = 0 if checkpoint is None else checkpoint['epoch']
-    train(train_dataloader, val_dataloader, model, optimizer, 
+    train(train_dataloader, val_dataloader, model, optimizer,
           device, args.epochs, tracker=tracker, current_epoch=current_epoch)
 
 

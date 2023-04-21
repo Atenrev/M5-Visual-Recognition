@@ -11,14 +11,14 @@ class Annoyer:
     # High performance approaximate nearest neighbors - agnostic wrapper
     # Find implementation and documentation on https://github.com/spotify/annoy
 
-    def __init__(self, model, dataset, emb_size=None, distance='angular', experiment_name='resnet_base', out_dir='output/', device='cuda') -> None:
+    def __init__(self, embedder, dataloader, emb_size=None, distance='angular', experiment_name='resnet_base', out_dir='output/', device='cuda') -> None:
         assert not (emb_size is None) and isinstance(emb_size, int),\
             f'When using Annoyer KNN emb_size must be an int. Set as None for common interface. Found: {type(emb_size)}'
 
-        self.model = model
+        self.embedder = embedder
 
         # FIXME: Dataloader assumes 1 - Batch Size
-        self.dataloader = dataset
+        self.dataloader = dataloader
         self.device = device
 
         os.makedirs(out_dir, exist_ok=True)
@@ -36,17 +36,25 @@ class Annoyer:
         else:
             self.state_variables['built'] = True
 
-        for idx, (image, _) in enumerate(self.dataloader):
-            print(
-                f'Building KNN... {idx} / {len(self.dataloader)}\t', end='\r')
+        for idx, batch in enumerate(pbar := tqdm(self.dataloader, desc='Building KNN (Annoyer)....', leave=False)):
+            batch_size = len(batch[0])
+            assert batch_size == 1, f'Annoyer KNN only supports batch_size = 1. Found: {batch_size}'
+            anchors, positives, _ = batch
+
+            if type(anchors[0]) == str:  # Text2Image
+                positives = positives.to(self.device)
+            else:  # Image2Text
+                positives = self.embedder.tokenizer_encode_text(positives).to(self.device)
 
             with torch.no_grad():
-                emb = self.model(image.float().to(self.device)).squeeze(
-                ).cpu().numpy()  # Ensure batch_size = 1
+                if type(anchors[0]) == str:  # Text2Image
+                    embed = self.embedder(positives).cpu().numpy()
+                else:  # Image2Text
+                    embed = self.embedder(positives.input_ids, positives.attention_mask).cpu().numpy()
+            embed = embed.squeeze()
+            self.trees.add_item(idx, embed)
 
-            self.trees.add_item(idx, emb)
-
-        self.trees.build(10)  # 10 trees
+        self.trees.build(10)
         self.trees.save(self.path)
 
     def load(self):

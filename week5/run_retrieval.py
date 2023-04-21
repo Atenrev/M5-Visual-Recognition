@@ -4,23 +4,20 @@ import numpy as np
 import matplotlib
 import torch
 import random
-
 from tqdm import tqdm
-from sklearn.preprocessing import label_binarize
+from datetime import datetime
 
 from src.metrics import (
-    calculate_mean_average_precision, 
-    calculate_top_k_accuracy, 
+    calculate_mean_average_precision,
+    calculate_top_k_accuracy,
 )
 from src.methods.annoyers import Annoyer
 from src.models.resnet import ResNetWithEmbedder
-from src.metrics import plot_prec_rec_curve_multiclass
 from src.models.triplet_nets import ImageToTextTripletModel, SymmetricSiameseModel, TextToImageTripletModel
 from src.models.resnet import ResNetWithEmbedder
 from src.models.bert_text_encoder import BertTextEncoder
 from src.models.clip_text_encoder import CLIPTextEncoder
 from src.datasets.coco import create_dataloader as create_coco_dataloader
-from src.datasets.dummy import create_dataloader as create_dummy_dataloader
 
 
 def __parse_args() -> argparse.Namespace:
@@ -28,6 +25,8 @@ def __parse_args() -> argparse.Namespace:
         description='MCV-M5-Project, week 5, run retrieval. Team 1'
     )
 
+    parser.add_argument('--mode', type=str, required=True,
+                        help='Mode to use. Options: image_to_text, text_to_image, symmetric.')
     parser.add_argument('--dataset_path', type=str, default='./datasets/COCO',
                         help='Path to the dataset.')
     parser.add_argument('--seed', type=int, default=42,
@@ -36,27 +35,40 @@ def __parse_args() -> argparse.Namespace:
     parser.add_argument('--n_neighbors', type=int, default=50,
                         help='Number of nearest neighbors to retrieve.')
     # Model
-    parser.add_argument('--checkpoint', type=str, default="./checkpoints/epoch_1.pt",
+    parser.add_argument('--checkpoint', type=str, required=True,
                         help='Path to the checkpoint to load.')
-    parser.add_argument('--mode', type=str, default='symmetric',
-                        help='Mode to use. Options: image_to_text, text_to_image, symmetric.')
-    parser.add_argument('--image_encoder', type=str, default='resnet_18',
+    parser.add_argument('--image_encoder', type=str, required=True,
                         help='Image Encoder to use. Options: resnet_X, vgg.')
-    parser.add_argument('--text_encoder', type=str, default='clip',
+    parser.add_argument('--text_encoder', type=str, required=True,
                         help='Text Encoder to use. Options: clip, bert.')
     parser.add_argument('--embedding_size', type=int, default=256,
                         help='Size of the embedding vector.')
+    # Loss configuration
+    parser.add_argument('--triplet_margin', type=float, default=0.05,
+                        help='Margin for triplet loss.')
+    parser.add_argument('--triplet_norm', type=int, default=2,
+                        help='Norm for triplet loss.')
 
     args = parser.parse_args()
     return args
 
 
-def run_experiment(train_dataloader, test_dataloader, model, embed_size, n_neighbors=50, experiment_name='resnet_base', device='cuda'):
-    # TODO: Adapt this function to this dataset and modality
+def run_experiment(
+    dataloader, model, embed_size, mode, n_neighbors=50, experiment_name='resnet_base', device='cuda'
+):
+    # Model
     model = model.to(device)
-    
+    if mode == 'image_to_text' or mode == 'symmetric':
+        embedder_query = model.image_encoder
+        embedder_database = model.text_encoder
+    elif mode == 'text_to_image':
+        embedder_query = model.text_encoder
+        embedder_database = model.image_encoder
+    else:  # TODO: implement symmetric
+        raise NotImplementedError(f"Mode {mode} not supported.")
+
     # Annoyer
-    annoy = Annoyer(model, train_dataloader, emb_size=embed_size,
+    annoy = Annoyer(embedder_database, dataloader, emb_size=embed_size,
                     device=device, distance='angular', experiment_name=experiment_name)
     try:
         annoy.load()
@@ -65,77 +77,70 @@ def run_experiment(train_dataloader, test_dataloader, model, embed_size, n_neigh
         annoy.fit()
 
     # Metrics
-    mavep = []
-    mavep25 = []
-    top_1_acc = []
-    top_5_acc = []
-    top_10_acc = []
+    mavep, mavep25 = [], []
+    top_1_acc, top_5_acc, top_10_acc = [], [], []
 
-    embeds = []
-    Y_gt = []
-    Y_probs = []
-    for idx in tqdm(range(len(test_dataloader.dataset))):
-        idx = np.random.randint(0, len(test_dataloader.dataset))
-        query, label_query = test_dataloader.dataset[idx]
-
-        V = model(query.unsqueeze(0).to(device)).squeeze()
-        embeds.append(V)
+    seen_images = set()
+    for idx in tqdm(range(len(dataloader.dataset))):
+        anchor, _, _ = dataloader.dataset[idx]
+        anchor = anchor.unsqueeze(0)
+        print("anchor.shape ", anchor.shape)
+        if type(anchor[0]) == str:  # Text2Image
+            anchor = embedder_query.tokenize(anchor).to(device)
+            V = embedder_query(anchor.input_ids, anchor.attention_mask).squeeze()
+        else:  # Image2Text
+            if dataloader.dataset.image_paths[idx] in seen_images:
+                continue
+            seen_images.add(dataloader.dataset.image_paths[idx])
+            anchor = anchor.to(device)
+            V = embedder_query(anchor).squeeze()
 
         nns, distances = annoy.retrieve_by_vector(
-            V, n=n_neighbors, include_distances=True)
-        labels = list()
-        labels_pred = list()
+            V, n=n_neighbors, include_distances=True,
+        )
 
-        for nn in nns:
-            _, label = train_dataloader.dataset[nn]
-            labels.append(int(label == label_query))
-            labels_pred.append(label)
-
-        Y_gt.append(label_binarize([label_query], classes=[*range(8)])[0])
-        
-        distances = np.array(distances)
-        labels_pred = np.array(labels_pred)
-
-        # Compute probabilities per class
-        weights = 1 / (distances + 1e-6)
-        weighted_counts = np.bincount(labels_pred, weights=weights, minlength=8)
-        probabilities = weighted_counts 
-        Y_probs.append(probabilities)
+        labels = []
+        if type(anchor[0]) == str:
+            # Text2Image
+            for nn in nns:
+                labels.append(nn == idx)  # Check if same idx (a caption is associated to a single image)
+        else:
+            # Image2Text
+            for nn in nns:
+                labels.append(
+                    int(dataloader.dataset.image_paths[idx] == dataloader.dataset.image_paths[nn])
+                )  # Check if same image path (an image can have multiple captions)
 
         mavep.append(calculate_mean_average_precision(labels, distances))
-        mavep25.append(calculate_mean_average_precision(
-            labels[:26], distances[:26]))
-        top_1_acc.append(calculate_top_k_accuracy(labels, k=1))
-        top_5_acc.append(calculate_top_k_accuracy(labels, k=5))
-        top_10_acc.append(calculate_top_k_accuracy(labels, k=10))
+        mavep25.append(calculate_mean_average_precision(labels[:26], distances[:26]))
+        top_1_acc.append(calculate_top_k_accuracy(labels, k = 1))
+        top_5_acc.append(calculate_top_k_accuracy(labels, k = 5))
+        top_10_acc.append(calculate_top_k_accuracy(labels, k = 10))
 
-    Y_gt = np.array(Y_gt)
-    Y_probs = np.array(Y_probs)
-    output_path = f'./week4/plots/{experiment_name}_prec_rec_curve.png'
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    plot_prec_rec_curve_multiclass(Y_gt, Y_probs, LABELS, output_path=output_path)
+    print(
+        "Metrics: ",
+        f"\n\tmAveP@50: {np.mean(mavep) * 100} %",
+        f"\n\tmAveP@25: {np.mean(mavep25) * 100} %",
+        f"\n\ttop_1 - precision: {np.mean(top_1_acc) * 100} %",
+        f"\n\ttop_5 - precision: {np.mean(top_5_acc) * 100} %",
+        f"\n\ttop_10 - precision: {np.mean(top_10_acc) * 100} %",
+    )
+    print(f"Finished experiment {experiment_name}.")
+    print("--------------------------------------------------")
 
-    print("Metrics: ",
-          f"\n\tmAveP@50: {np.mean(mavep)}",
-          f"\n\tmAveP@25: {np.mean(mavep25)}",
-          f"\n\ttop_1 - precision: {np.mean(top_1_acc)}",
-          f"\n\ttop_5 - precision: {np.mean(top_5_acc)}",
-          f"\n\ttop_10 - precision: {np.mean(top_10_acc)}"
-          )
     return np.mean(mavep), np.mean(mavep25), np.mean(top_1_acc), np.mean(top_5_acc), np.mean(top_10_acc)
 
 
 def main(args: argparse.Namespace):
-    experiment_name = f'{args.image_encoder}_{args.text_encoder}_{args.mode}_embed_{args.embedding_size}_nneighbors_{args.n_neighbors}'
-   # Set seeds
+    # Set seeds
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     random.seed(args.seed)
 
     # Load data
-    train_dataloader, val_dataloader, _ = create_coco_dataloader(
+    _, val_dataloader, _ = create_coco_dataloader(
         args.dataset_path,
-        args.batch_size,
+        1,
         inference=False,
         test_mode=True, # TODO: Change to False!!!
     )
@@ -183,17 +188,35 @@ def main(args: argparse.Namespace):
 
     model.to(device)
 
+    experiment_name = f"{args.mode}_{args.image_encoder}_{args.text_encoder}_embed{args.embedding_size}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     with torch.no_grad():
         mavep, mavep25, top_1_acc, top_5_acc, top_10_acc = run_experiment(
-            train_dataloader, val_dataloader, model, 
-            args.embedding_size, args.n_neighbors, experiment_name=experiment_name)
-        
-    with open(os.path.join(args.checkpoint, "../", "results.txt"), "w") as f:
-        f.write(f"mAveP@50: {mavep}\n")
-        f.write(f"mAveP@25: {mavep25}\n")
-        f.write(f"top_1 - precision: {top_1_acc}\n")
-        f.write(f"top_5 - precision: {top_5_acc}\n")
-        f.write(f"top_10 - precision: {top_10_acc}\n")
+            val_dataloader, model,
+            args.embedding_size, args.mode, args.n_neighbors,
+            experiment_name=experiment_name
+        )
+        with open(os.path.join(os.path.dirname(args.checkpoint), "results.txt"), "w") as f:
+            f.write(f"mAveP@50: {mavep}\n")
+            f.write(f"mAveP@25: {mavep25}\n")
+            f.write(f"top_1 - precision: {top_1_acc}\n")
+            f.write(f"top_5 - precision: {top_5_acc}\n")
+            f.write(f"top_10 - precision: {top_10_acc}\n")
+
+        if args.mode == 'symmetric':  # Run both Image2Text and Text2Image
+            args.mode = 'text_to_image'
+            experiment_name = f"{args.mode}_{args.image_encoder}_{args.text_encoder}_embed{args.embedding_size}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            mavep, mavep25, top_1_acc, top_5_acc, top_10_acc = run_experiment(
+                val_dataloader, model,
+                args.embedding_size, args.mode, args.n_neighbors,
+                experiment_name=experiment_name
+            )
+
+            with open(os.path.join(os.path.dirname(args.checkpoint), "results_text_to_image.txt"), "w") as f:
+                f.write(f"mAveP@50: {mavep}\n")
+                f.write(f"mAveP@25: {mavep25}\n")
+                f.write(f"top_1 - precision: {top_1_acc}\n")
+                f.write(f"top_5 - precision: {top_5_acc}\n")
+                f.write(f"top_10 - precision: {top_10_acc}\n")
 
 
 if __name__ == "__main__":
