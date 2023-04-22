@@ -142,7 +142,7 @@ class TextToImageCOCO(SubsetCOCO):
         negative_img, _ = super(TextToImageCOCO, self).__getitem__(negative_img_idx)
 
         return anchor_caption, positive_img, negative_img
-    
+
 
 def create_dataloader(
         dataset_path: str,
@@ -150,18 +150,21 @@ def create_dataloader(
         inference: bool = False,
         input_size: int = 224,
         mode: str = "image_to_text",
-        test_mode: bool = False,
-        percentage: float = 1.0,
+        train_size: float = 1.0,
+        val_size: float = 1.0,
         random_subset: bool = False,
 ):
     """
     Creates a dataloader for the COCO dataset.
     Args:
-        batch_size (int): Batch size.
         dataset_path (str): Path to the COCO dataset.
-        config (Any): Config object.
+        batch_size (int): Batch size.
         inference (bool): Whether to create a dataloader for inference.
-        dataset_kwargs (dict): Keyword arguments for the dataset.
+        input_size (int): Size of the input images.
+        mode (str): Whether to create a dataloader for Image-to-Text or Text-to-Image retrieval.
+        train_size (float): Percentage of the training set to use.
+        val_size (float): Percentage of the validation set to use.
+        random_subset (bool): Whether to use a random subset of the train and validation set.
     Returns:
         train_dataloader (torch.utils.data.DataLoader): Dataloader for training.
         test_dataloader (torch.utils.data.DataLoader): Dataloader for testing.
@@ -176,18 +179,18 @@ def create_dataloader(
                 std=[0.2290, 0.2240, 0.2250]),
             # transforms.ToTensor(),
         ])
-    
+
     # Create dataset
     if mode == "image_to_text" or mode == "symmetric":
         train_dataset = ImageToTextCOCO(
-            percentage=percentage,
+            percentage=train_size,
             root=os.path.join(dataset_path, "train2014"),
             annFile=os.path.join(dataset_path, "captions_train2014.json"),
             transform=transform,
             random_subset=random_subset,
         )
         val_dataset = ImageToTextCOCO(
-            percentage=percentage,
+            percentage=val_size,
             root=os.path.join(dataset_path, "val2014"),
             annFile=os.path.join(dataset_path, "captions_val2014.json"),
             transform=transform,
@@ -195,14 +198,14 @@ def create_dataloader(
         )
     elif mode == "text_to_image":
         train_dataset = TextToImageCOCO(
-            percentage=percentage,
+            percentage=train_size,
             root=os.path.join(dataset_path, "train2014"),
             annFile=os.path.join(dataset_path, "captions_train2014.json"),
             transform=transform,
             random_subset=random_subset,
         )
-        val_dataset = ImageToTextCOCO(
-            percentage=percentage,
+        val_dataset = TextToImageCOCO(
+            percentage=val_size,
             root=os.path.join(dataset_path, "val2014"),
             annFile=os.path.join(dataset_path, "captions_val2014.json"),
             transform=transform,
@@ -212,8 +215,8 @@ def create_dataloader(
         raise ValueError(f"Invalid mode: {mode}")
 
     # Print dataset info
-    print(f"Train dataset with {percentage:.2%} of data:\n{train_dataset.dataset}")
-    print(f"Val dataset with {percentage:.2%} of data:\n{val_dataset.dataset}")
+    print(f"Train dataset with {train_size:.2%} of data:\n{train_dataset.dataset}")
+    print(f"Val dataset with {val_size:.2%} of data:\n{val_dataset.dataset}")
 
     if not inference:
         train_dataloader = DataLoader(
