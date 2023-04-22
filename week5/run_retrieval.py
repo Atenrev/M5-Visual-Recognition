@@ -91,12 +91,12 @@ def run_experiment(
 
     for idx in tqdm(range(len(dataloader.dataset))):
         anchor, _, _ = dataloader.dataset[idx]
-        anchor = anchor.unsqueeze(0)
 
         if type(anchor[0]) == str:  # Text2Image
             anchor = embedder_query.tokenize(anchor).to(device)
             V = embedder_query(anchor.input_ids, anchor.attention_mask).squeeze()
         else:  # Image2Text
+            anchor = anchor.unsqueeze(0)
             anchor = anchor.to(device)
             V = embedder_query(anchor).squeeze()
 
