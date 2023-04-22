@@ -12,7 +12,6 @@ from src.metrics import (
     calculate_top_k_accuracy,
 )
 from src.methods.annoyers import Annoyer
-from src.models.resnet import ResNetWithEmbedder
 from src.models.triplet_nets import ImageToTextTripletModel, SymmetricSiameseModel, TextToImageTripletModel
 from src.models.resnet import ResNetWithEmbedder
 from src.models.bert_text_encoder import BertTextEncoder
@@ -31,6 +30,12 @@ def __parse_args() -> argparse.Namespace:
                         help='Path to the dataset.')
     parser.add_argument('--seed', type=int, default=42,
                         help='Seed for the experiment.')
+    parser.add_argument('--train_size', type=float, default=1.0,
+                        help='Percentage of the dataset to use for training.')
+    parser.add_argument('--val_size', type=float, default=1.0,
+                        help='Percentage of the dataset to use for validation.')
+    parser.add_argument('--random_subset', type=bool, default=False,
+                        help='Whether to use a random subset for train and val (given by train_size and val_size).')
     # Annoyer
     parser.add_argument('--n_neighbors', type=int, default=50,
                         help='Number of nearest neighbors to retrieve.')
@@ -138,12 +143,22 @@ def main(args: argparse.Namespace):
     random.seed(args.seed)
 
     # Load data
+    # _, val_dataloader, _ = create_coco_dataloader(
+    #     args.dataset_path,
+    #     1,
+    #     inference=False,
+    #     test_mode=True, # TODO: Change to False!!!
+    # )
     _, val_dataloader, _ = create_coco_dataloader(
-        args.dataset_path,
-        1,
+        dataset_path=args.dataset_path,
+        batch_size=args.batch_size,
         inference=False,
-        test_mode=True, # TODO: Change to False!!!
+        mode=args.mode,
+        train_size=args.train_size,
+        val_size=args.val_size,
+        random_subset=args.random_subset,
     )
+
     # Create dummy data for testing
     # val_dataloader = create_dummy_dataloader(args)
 
