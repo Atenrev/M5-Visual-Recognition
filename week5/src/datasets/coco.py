@@ -212,8 +212,8 @@ def create_dataloader(
         raise ValueError(f"Invalid mode: {mode}")
 
     # Print dataset info
-    print(f"Train dataset with {percentage:.2%} of data:\n{train_dataset}")
-    print(f"Val dataset with {percentage:.2%} of data:\n{val_dataset}")
+    print(f"Train dataset with {percentage:.2%} of data:\n{train_dataset.dataset}")
+    print(f"Val dataset with {percentage:.2%} of data:\n{val_dataset.dataset}")
 
     if not inference:
         train_dataloader = DataLoader(
