@@ -93,7 +93,7 @@ def run_experiment(
         anchor, _, _ = dataloader.dataset[idx]
 
         if type(anchor[0]) == str:  # Text2Image
-            anchor = embedder_query.tokenize(anchor).to(device)
+            anchor = embedder_query.tokenizer_encode_text(anchor).to(device)
             V = embedder_query(anchor.input_ids, anchor.attention_mask).squeeze()
         else:  # Image2Text
             anchor = anchor.unsqueeze(0)
