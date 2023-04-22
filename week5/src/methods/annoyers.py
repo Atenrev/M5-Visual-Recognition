@@ -57,7 +57,6 @@ class Annoyer:
                 for i in range(len(captions)):
                     positives = captions[i]
                     positives = self.embedder.tokenizer_encode_text(positives).to(self.device)
-                    print("positives.shape: ", positives.shape)
                     embed = self.embedder(positives.input_ids, positives.attention_mask).cpu().numpy()
                     embed = embed.squeeze()
                     self.trees.add_item(idx_annoyer, embed)
