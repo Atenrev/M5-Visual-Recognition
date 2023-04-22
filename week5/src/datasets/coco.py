@@ -127,6 +127,8 @@ class TextToImageCOCO(SubsetCOCO):
     """
     Custom dataset class for creating triplets from COCO dataset for image retrieval task.
     """
+    def __init__(self, *args, **kwargs):
+        super(TextToImageCOCO, self).__init__(*args, **kwargs)
 
     def __getitem__(self, idx, return_triplet: bool = True):
         positive_img, captions = super(TextToImageCOCO, self).__getitem__(idx)
