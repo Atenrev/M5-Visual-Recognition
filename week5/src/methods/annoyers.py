@@ -36,6 +36,8 @@ class Annoyer:
         else:
             self.state_variables['built'] = True
 
+        self.idx_dataset2annoyer = {}
+        idx_annoyer = 0
         for idx, batch in enumerate(pbar := tqdm(self.dataloader, desc='Building KNN (Annoyer)....', leave=False)):
             batch_size = len(batch[0])
             assert batch_size == 1, f'Annoyer KNN only supports batch_size = 1. Found: {batch_size}'
@@ -43,18 +45,26 @@ class Annoyer:
 
             if type(anchors[0]) == str:  # Text2Image
                 positives = positives.to(self.device)
-            else:  # Image2Text
-                positives = self.embedder.tokenizer_encode_text(positives).to(self.device)
-
-            with torch.no_grad():
-                if type(anchors[0]) == str:  # Text2Image
+                with torch.no_grad():
                     embed = self.embedder(positives).cpu().numpy()
-                else:  # Image2Text
+                embed = embed.squeeze()
+                self.trees.add_item(idx, embed)
+            else:  # Image2Text
+                # get all captions associated with the image
+                _, captions = super(type(self.dataloader.dataset), self.dataloader.dataset).__getitem__(idx)
+                # store the mapping from annoyer idx to dataset idx, and index the captions
+                self.idx_dataset2annoyer[idx] = []
+                for i in range(len(captions)):
+                    positives = captions[i].to(self.device).unsqueeze(0)
+                    print("positives.shape: ", positives.shape)
+                    positives = self.embedder.tokenizer_encode_text(positives).to(self.device)
                     embed = self.embedder(positives.input_ids, positives.attention_mask).cpu().numpy()
-            embed = embed.squeeze()
-            self.trees.add_item(idx, embed)
+                    embed = embed.squeeze()
+                    self.trees.add_item(idx_annoyer, embed)
+                    self.idx_dataset2annoyer[idx].append(idx_annoyer)
+                    idx_annoyer += 1
 
-        self.trees.build(10)
+        self.trees.build(50)
         self.trees.save(self.path)
 
     def load(self):
