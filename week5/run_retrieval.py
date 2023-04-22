@@ -223,6 +223,17 @@ def main(args: argparse.Namespace):
 
         if args.mode == 'symmetric':  # Run both Image2Text and Text2Image
             args.mode = 'text_to_image'
+
+            _, val_dataloader, _ = create_coco_dataloader(
+                dataset_path=args.dataset_path,
+                batch_size=1,
+                inference=False,
+                mode=args.mode,
+                train_size=args.train_size,
+                val_size=args.val_size,
+                random_subset=args.random_subset,
+            )
+
             experiment_name = f"{args.mode}_{args.image_encoder}_{args.text_encoder}_embed{args.embedding_size}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             mavep, mavep25, top_1_acc, top_5_acc, top_1_recall, top_5_recall = run_experiment(
                 val_dataloader, model,
