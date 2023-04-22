@@ -136,9 +136,9 @@ class TextToImageCOCO(SubsetCOCO):
             return anchor_caption, positive_img
 
         # Get negative image
-        negative_img_idx = random.randint(0, len(self.image_paths) - 1)
+        negative_img_idx = random.randint(0, len(self) - 1)
         while negative_img_idx == idx:
-            negative_img_idx = random.randint(0, len(self.image_paths) - 1)
+            negative_img_idx = random.randint(0, len(self) - 1)
         negative_img, _ = super(TextToImageCOCO, self).__getitem__(negative_img_idx)
 
         return anchor_caption, positive_img, negative_img
