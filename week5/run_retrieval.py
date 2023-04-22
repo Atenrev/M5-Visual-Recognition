@@ -61,6 +61,51 @@ def __parse_args() -> argparse.Namespace:
 def recall_at_k(labels, n_relevant, k):
     return np.sum(labels[:k]) / n_relevant
 
+
+def AP(actual, predicted):
+    gtp = 0
+    ap = 0
+    for i in range(len(predicted)):
+        a = pk(actual, predicted, i+1)
+        if actual == predicted[i]: 
+            b = 1
+            gtp += 1
+        else: 
+            b = 0
+        c = a*b
+        ap += c
+    if gtp == 0:
+        return 0
+    return ap/gtp
+
+
+def mAP(actual, predicted):
+    ap_list = []
+    for i in range(len(actual)):
+        ap = AP(actual[i], predicted[i])
+        ap_list.append(ap)
+    return np.mean(ap_list)
+
+
+def pk(actual, predicted, k=10):
+    if len(predicted) > k:
+        predicted = predicted[:k]
+    score = 0
+    for i in range(len(predicted)):
+        if actual == predicted[i]:
+            score += 1
+    
+    return score / len(predicted)
+
+
+def mpk(actual, predicted, k=10):
+    pk_list = []
+    for i in range(len(actual)):
+        score = pk(actual[i], predicted[i], k)
+        pk_list.append(score)
+    return np.mean(pk_list)
+
+
 def run_experiment(
     dataloader, model, embed_size, mode, n_neighbors=50, experiment_name='resnet_base', device='cuda'
 ):
@@ -72,7 +117,7 @@ def run_experiment(
     elif mode == 'text_to_image':
         embedder_query = model.text_encoder
         embedder_database = model.image_encoder
-    else:  # TODO: implement symmetric
+    else:
         raise NotImplementedError(f"Mode {mode} not supported.")
 
     # Annoyer
@@ -88,7 +133,7 @@ def run_experiment(
     mavep, mavep25 = [], []
     top_1_acc, top_5_acc, = [], []
     top_1_recall, top_5_recall, = [], []
-
+    pred_label_all = []
     for idx in tqdm(range(len(dataloader.dataset))):
         anchor, _, _ = dataloader.dataset[idx]
         is_text_anchor = type(anchor[0]) == str
@@ -105,39 +150,65 @@ def run_experiment(
             V, n=n_neighbors, include_distances=True,
         )
 
-        labels = []
         if is_text_anchor:  # Text2Image
-            n_relevant = 1
+            pred = 0
             for nn in nns:
-                labels.append(nn == idx)
-        else:  # Image2Text
+                if nn == idx:
+                    pred = 1
+                    break
+            pred_label_all.append(pred)
+        else:
+            pred = 0
             valid_captions_idxs = annoy.idx_dataset2annoyer[idx]
-            n_relevant = len(valid_captions_idxs)
             for nn in nns:
-                labels.append(nn in valid_captions_idxs)
+                if nn in valid_captions_idxs:
+                    pred = 1
+                    break
+            pred_label_all.append(pred)
 
-        mavep.append(calculate_mean_average_precision(labels, distances))
-        mavep25.append(calculate_mean_average_precision(labels[:26], distances[:26]))
-        top_1_acc.append(calculate_top_k_accuracy(labels, k = 1))
-        top_5_acc.append(calculate_top_k_accuracy(labels, k = 5))
-        top_1_recall.append(recall_at_k(labels, n_relevant=n_relevant, k=1))
-        top_5_recall.append(recall_at_k(labels, n_relevant=n_relevant, k=5))
+        # labels = []
+        # if is_text_anchor:  # Text2Image
+        #     n_relevant = 1
+        #     for nn in nns:
+        #         labels.append(nn == idx)
+        # else:  # Image2Text
+        #     valid_captions_idxs = annoy.idx_dataset2annoyer[idx]
+        #     n_relevant = len(valid_captions_idxs)
+        #     for nn in nns:
+        #         labels.append(nn in valid_captions_idxs)
 
-    print(
-        "Metrics: ",
-        f"\n\tmAveP@50: {np.mean(mavep) * 100} %",
-        f"\n\tmAveP@25: {np.mean(mavep25) * 100} %",
-        f"\n\ttop_1 - precision: {np.mean(top_1_acc) * 100} %",
-        f"\n\ttop_5 - precision: {np.mean(top_5_acc) * 100} %",
-        f"\n\ttop_1 - recall: {np.mean(top_1_recall) * 100} %",
-        f"\n\ttop_5 - recall: {np.mean(top_5_recall) * 100} %",
-    )
+        # mavep.append(calculate_mean_average_precision(labels, distances))
+        # mavep25.append(calculate_mean_average_precision(labels[:26], distances[:26]))
+        # top_1_acc.append(calculate_top_k_accuracy(labels, k = 1))
+        # top_5_acc.append(calculate_top_k_accuracy(labels, k = 5))
+        # top_1_recall.append(recall_at_k(labels, n_relevant=n_relevant, k=1))
+        # top_5_recall.append(recall_at_k(labels, n_relevant=n_relevant, k=5))
+
+    ground_truth = np.ones_like(pred_label_all)
+
+    print(ground_truth)
+    p_1 = mpk(ground_truth, pred_label_all, 1)
+    p_5 = mpk(ground_truth, pred_label_all, 5)
+    print('P@1={:.3f}'.format(p_1 * 100))
+    print('P@5={:.3f}'.format(p_5 * 100))
+
+    map = mAP(ground_truth, pred_label_all)
+    print('mAP={:.3f}'.format(map * 100))
+
+    # print(
+    #     "Metrics: ",
+    #     f"\n\tmAveP@50: {np.mean(mavep) * 100} %",
+    #     f"\n\tmAveP@25: {np.mean(mavep25) * 100} %",
+    #     f"\n\ttop_1 - precision: {np.mean(top_1_acc) * 100} %",
+    #     f"\n\ttop_5 - precision: {np.mean(top_5_acc) * 100} %",
+    #     f"\n\ttop_1 - recall: {np.mean(top_1_recall) * 100} %",
+    #     f"\n\ttop_5 - recall: {np.mean(top_5_recall) * 100} %",
+    # )
     print(f"Finished experiment {experiment_name}.")
     print("--------------------------------------------------")
 
     return np.mean(mavep), np.mean(mavep25), np.mean(top_1_acc), np.mean(top_5_acc),  np.mean(top_1_recall), np.mean(top_5_recall)
 
-## recall
 
 def main(args: argparse.Namespace):
     # Set seeds
