@@ -9,6 +9,9 @@ python task_a.py \
     --mode image_to_text  \
     --output_path "outputs_task_a/" \
     --dataset_path "/home/mcv/datasets/COCO/" \
+    --train_size 0.6 \
+    --val_size 1.0 \
+    --random_subset True \
 	--image_encoder resnet_18 \
     --text_encoder bert \
     --embedding_size 256 \
