@@ -94,9 +94,9 @@ def run_experiment(
             anchor = embedder_query.tokenize(anchor).to(device)
             V = embedder_query(anchor.input_ids, anchor.attention_mask).squeeze()
         else:  # Image2Text
-            if dataloader.dataset.image_paths[idx] in seen_images:
-                continue
-            seen_images.add(dataloader.dataset.image_paths[idx])
+            # if dataloader.dataset.image_paths[idx] in seen_images:
+            #     continue
+            # seen_images.add(dataloader.dataset.image_paths[idx])
             anchor = anchor.to(device)
             V = embedder_query(anchor).squeeze()
 
@@ -105,16 +105,18 @@ def run_experiment(
         )
 
         labels = []
-        if type(anchor[0]) == str:
-            # Text2Image
-            for nn in nns:
-                labels.append(nn == idx)  # Check if same idx (a caption is associated to a single image)
-        else:
-            # Image2Text
-            for nn in nns:
-                labels.append(
-                    int(dataloader.dataset.image_paths[idx] == dataloader.dataset.image_paths[nn])
-                )  # Check if same image path (an image can have multiple captions)
+        for nn in nns:
+            labels.append(nn == idx)
+        # if type(anchor[0]) == str:
+        #     # Text2Image
+        #     for nn in nns:
+        #         labels.append(nn == idx)  # Check if same idx (a caption is associated to a single image)
+        # else:
+        #     # Image2Text
+        #     for nn in nns:
+        #         labels.append(
+        #             int(dataloader.dataset.image_paths[idx] == dataloader.dataset.image_paths[nn])
+        #         )  # Check if same image path (an image can have multiple captions)
 
         mavep.append(calculate_mean_average_precision(labels, distances))
         mavep25.append(calculate_mean_average_precision(labels[:26], distances[:26]))
