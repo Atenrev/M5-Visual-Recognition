@@ -91,8 +91,9 @@ def run_experiment(
 
     for idx in tqdm(range(len(dataloader.dataset))):
         anchor, _, _ = dataloader.dataset[idx]
+        is_text_anchor = type(anchor[0]) == str
 
-        if type(anchor[0]) == str:  # Text2Image
+        if is_text_anchor:  # Text2Image
             anchor = embedder_query.tokenizer_encode_text(anchor).to(device)
             V = embedder_query(anchor.input_ids, anchor.attention_mask).squeeze()
         else:  # Image2Text
@@ -105,7 +106,7 @@ def run_experiment(
         )
 
         labels = []
-        if type(anchor[0]) == str:  # Text2Image
+        if is_text_anchor:  # Text2Image
             n_relevant = 1
             for nn in nns:
                 labels.append(nn == idx)
