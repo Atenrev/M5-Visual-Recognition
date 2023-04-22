@@ -6,7 +6,7 @@
 #SBATCH -o logs/%x_%u_%j.out # File to which STDOUT will be written
 #SBATCH -e logs/%x_%u_%j.err # File to which STDERR will be written
 python run_retrieval.py \
-    --mode text_to_image  \
+    --mode symmetric  \
     --dataset_path "$1" \
     --image_encoder resnet_18 \
     --text_encoder clip \
