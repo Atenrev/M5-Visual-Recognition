@@ -107,24 +107,14 @@ def run_experiment(
 
         labels = []
         if is_text_anchor:  # Text2Image
-            pred = 0
             n_relevant = 1
             for nn in nns:
-                # labels.append(nn == idx)
-                if nn == idx:
-                    pred = 1
-                    break
-            labels.append(pred)
+                labels.append(nn == idx)
         else:  # Image2Text
             valid_captions_idxs = annoy.idx_dataset2annoyer[idx]
             n_relevant = len(valid_captions_idxs)
-            pred = 0
             for nn in nns:
-                # labels.append(nn in valid_captions_idxs)
-                if nn in valid_captions_idxs:
-                    labels.append(1)
-            if len(labels) == 0:
-                labels.append(0)
+                labels.append(nn in valid_captions_idxs)
 
         mavep.append(calculate_mean_average_precision(labels, distances))
         mavep25.append(calculate_mean_average_precision(labels[:26], distances[:26]))
