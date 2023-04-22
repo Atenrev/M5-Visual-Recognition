@@ -8,7 +8,7 @@
 python task_a.py \
     --mode text_to_image \
     --output_path "outputs_task_b/" \
-    --dataset_path "/home/mcv/datasets/COCO/" \
+    --dataset_path "$1" \
     --train_size 0.6 \
     --val_size 1.0 \
     --random_subset True \

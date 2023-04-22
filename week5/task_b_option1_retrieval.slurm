@@ -8,7 +8,7 @@
 python task_a.py \
     --mode text_to_image \
     --output_path "outputs_task_b/" \
-    --dataset_path "/home/mcv/datasets/COCO/" \
+    --dataset_path "$1" \
 	--image_encoder resnet_18 \
     --text_encoder clip \
     --embedding_size 256 \

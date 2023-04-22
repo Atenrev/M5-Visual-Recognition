@@ -7,7 +7,7 @@
 #SBATCH -e logs/%x_%u_%j.err
 python run_retrieval.py \
     --mode image_to_text  \
-    --dataset_path "/home/mcv/datasets/COCO/" \
+    --dataset_path "$1" \
     --image_encoder resnet_18 \
     --text_encoder clip \
     --embedding_size 256 \
