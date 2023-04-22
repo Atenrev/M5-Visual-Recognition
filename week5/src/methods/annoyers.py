@@ -55,9 +55,9 @@ class Annoyer:
                 # store the mapping from annoyer idx to dataset idx, and index the captions
                 self.idx_dataset2annoyer[idx] = []
                 for i in range(len(captions)):
-                    positives = captions[i].to(self.device).unsqueeze(0)
-                    print("positives.shape: ", positives.shape)
+                    positives = captions[i]
                     positives = self.embedder.tokenizer_encode_text(positives).to(self.device)
+                    print("positives.shape: ", positives.shape)
                     embed = self.embedder(positives.input_ids, positives.attention_mask).cpu().numpy()
                     embed = embed.squeeze()
                     self.trees.add_item(idx_annoyer, embed)
