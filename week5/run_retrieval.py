@@ -151,7 +151,7 @@ def main(args: argparse.Namespace):
     # )
     _, val_dataloader, _ = create_coco_dataloader(
         dataset_path=args.dataset_path,
-        batch_size=args.batch_size,
+        batch_size=1,
         inference=False,
         mode=args.mode,
         train_size=args.train_size,
