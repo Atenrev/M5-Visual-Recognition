@@ -85,7 +85,7 @@ def run_experiment(
         annoy.fit()
 
     # Metrics
-    mavep, mavep25 = [], []
+    mavep1, mavep5, mavep25, mavep50 = [], [], [], []
     top_1_acc, top_5_acc, = [], []
     top_1_recall, top_5_recall, = [], []
 
@@ -116,8 +116,10 @@ def run_experiment(
             for nn in nns:
                 labels.append(nn in valid_captions_idxs)
 
-        mavep.append(calculate_mean_average_precision(labels, distances))
+        mavep1.append(calculate_mean_average_precision(labels[:2], distances[:2]))
+        mavep5.append(calculate_mean_average_precision(labels[:6], distances[:6]))
         mavep25.append(calculate_mean_average_precision(labels[:26], distances[:26]))
+        mavep50.append(calculate_mean_average_precision(labels, distances))
         top_1_acc.append(calculate_top_k_accuracy(labels, k = 1))
         top_5_acc.append(calculate_top_k_accuracy(labels, k = 5))
         top_1_recall.append(recall_at_k(labels, n_relevant=n_relevant, k=1))
@@ -125,8 +127,10 @@ def run_experiment(
 
     print(
         "Metrics: ",
-        f"\n\tmAveP@50: {np.mean(mavep) * 100} %",
+        f"\n\tmAveP@1: {np.mean(mavep1) * 100} %",
+        f"\n\tmAveP@5: {np.mean(mavep5) * 100} %",
         f"\n\tmAveP@25: {np.mean(mavep25) * 100} %",
+        f"\n\tmAveP@50: {np.mean(mavep50) * 100} %",
         f"\n\ttop_1 - precision: {np.mean(top_1_acc) * 100} %",
         f"\n\ttop_5 - precision: {np.mean(top_5_acc) * 100} %",
         f"\n\ttop_1 - recall: {np.mean(top_1_recall) * 100} %",
@@ -135,9 +139,8 @@ def run_experiment(
     print(f"Finished experiment {experiment_name}.")
     print("--------------------------------------------------")
 
-    return np.mean(mavep), np.mean(mavep25), np.mean(top_1_acc), np.mean(top_5_acc),  np.mean(top_1_recall), np.mean(top_5_recall)
+    return np.mean(mavep1), np.mean(mavep5), np.mean(mavep25), np.mean(mavep50), np.mean(top_1_acc), np.mean(top_5_acc),  np.mean(top_1_recall), np.mean(top_5_recall)
 
-## recall
 
 def main(args: argparse.Namespace):
     # Set seeds
@@ -199,6 +202,7 @@ def main(args: argparse.Namespace):
 
     checkpoint = torch.load(args.checkpoint)
     model.load_state_dict(checkpoint['model_state_dict'])
+    model.eval()
 
     # Train
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -208,14 +212,16 @@ def main(args: argparse.Namespace):
 
     experiment_name = f"{args.mode}_{args.image_encoder}_{args.text_encoder}_embed{args.embedding_size}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     with torch.no_grad():
-        mavep, mavep25, top_1_acc, top_5_acc, top_1_recall, top_5_recall = run_experiment(
+        mavep1, mavep5, mavep25, mavep50, top_1_acc, top_5_acc, top_1_recall, top_5_recall = run_experiment(
             val_dataloader, model,
             args.embedding_size, args.mode, args.n_neighbors,
             experiment_name=experiment_name
         )
         with open(os.path.join(os.path.dirname(args.checkpoint), "results.txt"), "w") as f:
-            f.write(f"mAveP@50: {mavep}\n")
+            f.write(f"mAveP@1: {mavep1}\n")
+            f.write(f"mAveP@5: {mavep5}\n")
             f.write(f"mAveP@25: {mavep25}\n")
+            f.write(f"mAveP@50: {mavep50}\n")
             f.write(f"top_1 - precision: {top_1_acc}\n")
             f.write(f"top_5 - precision: {top_5_acc}\n")
             f.write(f"top_1 - recall: {top_1_recall}\n")
@@ -234,16 +240,18 @@ def main(args: argparse.Namespace):
                 random_subset=args.random_subset,
             )
 
-            experiment_name = f"{args.mode}_{args.image_encoder}_{args.text_encoder}_embed{args.embedding_size}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            mavep, mavep25, top_1_acc, top_5_acc, top_1_recall, top_5_recall = run_experiment(
+            experiment_name = f"symmetric_{args.mode}_{args.image_encoder}_{args.text_encoder}_embed{args.embedding_size}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            mavep1, mavep5, mavep25, mavep50, top_1_acc, top_5_acc, top_1_recall, top_5_recall = run_experiment(
                 val_dataloader, model,
                 args.embedding_size, args.mode, args.n_neighbors,
                 experiment_name=experiment_name
             )
 
             with open(os.path.join(os.path.dirname(args.checkpoint), "results_text_to_image.txt"), "w") as f:
-                f.write(f"mAveP@50: {mavep}\n")
+                f.write(f"mAveP@1: {mavep1}\n")
+                f.write(f"mAveP@5: {mavep5}\n")
                 f.write(f"mAveP@25: {mavep25}\n")
+                f.write(f"mAveP@50: {mavep50}\n")
                 f.write(f"top_1 - precision: {top_1_acc}\n")
                 f.write(f"top_5 - precision: {top_5_acc}\n")
                 f.write(f"top_1 - recall: {top_1_recall}\n")
