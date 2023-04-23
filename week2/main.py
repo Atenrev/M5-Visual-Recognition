@@ -14,7 +14,7 @@ from tasks import train, evaluate, draw_seg, draw_dataset, draw_sequence
 
 def _parse_args() -> argparse.Namespace:
     usage_message = """
-                    Script for training a panels detector.
+                    Week2 - Pretrained detectors.
                     """
 
     parser = argparse.ArgumentParser(usage=usage_message)
