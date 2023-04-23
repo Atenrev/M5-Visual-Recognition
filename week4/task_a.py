@@ -21,7 +21,7 @@ from src.models.vgg import VGG19
 LABELS = ['coast', 'forest', 'highway', 'inside_city', 'mountain', 'Opencountry', 'street', 'tallbuilding']
 
 OUTPUT_PATH = './outputs_task_a'
-EXPERIMENT_NAME = 'None'  # TODO: set experiment name, Adria no te n'oblidis
+EXPERIMENT_NAME = 'VGG19'
 EXPERIMENT_DIR = os.path.join(OUTPUT_PATH, EXPERIMENT_NAME)
 os.makedirs(EXPERIMENT_DIR, exist_ok=True)
 tensorboard_folder = os.path.join(EXPERIMENT_DIR, 'tensorboard')
@@ -84,18 +84,18 @@ sprite {
 def visualize_embeddings(embeds, labels, split_name):
     tsne = manifold.TSNE(
         n_components=2,
-        perplexity=30,
+        perplexity=5,
         early_exaggeration=12,
         learning_rate="auto",
         n_iter=800,
         random_state=42,
         n_jobs=-1,
     )
-    umap = umap.UMAP(random_state=42)
+    umap_object = umap.UMAP(random_state=42)
     pca = PCA(n_components=2, svd_solver='auto', random_state=42)
     apply_projection = {
         'tsne': tsne.fit_transform,
-        'umap': umap.fit_transform,
+        'umap': umap_object.fit_transform,
         'pca': pca.fit_transform,
     }
     for embed_type in ['tsne', 'umap', 'pca']:
@@ -120,6 +120,7 @@ def visualize_embeddings(embeds, labels, split_name):
         frame.axes.get_xaxis().set_visible(False)
         frame.axes.get_yaxis().set_visible(False)
         global EXPERIMENT_DIR
+        os.makedirs(os.path.join(EXPERIMENT_DIR, 'plots_embeddings'), exist_ok=True)
         fig.savefig(os.path.join(EXPERIMENT_DIR, 'plots_embeddings', f"{embed_type}_{split_name}.png"))
         plt.close()
 
@@ -149,7 +150,7 @@ def main(k = 50):
     # model = ResNet(resnet='101').to(device)
 
     # Works better with smaller emb_sizes però que li farem
-    annoy = Annoyer(model, train, emb_size=2048, device=device, distance='angular')
+    annoy = Annoyer(model, train, emb_size=512, device=device, distance='angular')
     try: annoy.load()
     except:
         annoy.state_variables['built'] = False
@@ -162,12 +163,12 @@ def main(k = 50):
     top_10_acc = []
 
     embeds = []
-    for idx in tqdm(range(len(test.dataset))):
+    for idx in tqdm(len(test.dataset)):
 
         query, label_query = test.dataset[idx]
 
         V = model(query.unsqueeze(0).to(device)).squeeze()
-        embeds.append(V)
+        embeds.append(V.detach().cpu())
 
         query = (return_image_full_range(query))
         nns, distances = annoy.retrieve_by_vector(V, n=k, include_distances = True)
