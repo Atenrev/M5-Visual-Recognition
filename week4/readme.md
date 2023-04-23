@@ -1,4 +1,4 @@
-## Lab 4
+## Lab 4 - Image Retrieval
 
 [Presentation slides](https://docs.google.com/presentation/d/1Nc-LMoexcwWQh2YC-LRhskNEfGTeSG66W5IjuYabq2U/edit?usp=sharing)
 
