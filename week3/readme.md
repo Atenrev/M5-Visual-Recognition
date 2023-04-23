@@ -1,4 +1,4 @@
-## Lab 3
+## Lab 3 - Elephant in the Room
 
 [Presentation slides](https://docs.google.com/presentation/d/1fATsuFsUoD_CjUBYmI8Pr8WGOHp-kMw_m_ujcg-kkGQ/edit#slide=id.g1f9a58d00d7_0_0)
 
