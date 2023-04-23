@@ -60,7 +60,7 @@ def calculate_precision(prediction, gt):
 
 
 def calculate_top_k_accuracy(prediction, k = 5):
-    return sum(prediction[:k]) > 0 
+    return sum(prediction[:k]) / k# > 0
 
 
 def plot_retrieved_images(query, retrieved, true_positives = None, green_p = .05, shape = 512, out = 'tmp.png'):

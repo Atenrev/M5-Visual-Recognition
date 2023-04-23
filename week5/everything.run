@@ -1,0 +1,8 @@
+sbatch task_a_option1.slurm
+sbatch task_a_option2.slurm
+
+sbatch task_b_option1.slurm
+sbatch task_b_option2.slurm
+
+sbatch task_c_option1.slurm
+sbatch task_c_option2.slurm

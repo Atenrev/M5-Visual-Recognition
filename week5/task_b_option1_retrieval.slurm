@@ -5,14 +5,13 @@
 #SBATCH --gres gpu:1 # Para pedir Pascales MAX 8
 #SBATCH -o logs/%x_%u_%j.out # File to which STDOUT will be written
 #SBATCH -e logs/%x_%u_%j.err # File to which STDERR will be written
-python task_a.py \
-    --mode text_to_image \
-    --output_path "outputs_task_b/" \
-    --dataset_path "/home/mcv/datasets/COCO/" \
-	--image_encoder resnet_18 \
+python run_retrieval.py \
+    --mode text_to_image  \
+    --dataset_path "$1" \
+    --image_encoder resnet_18 \
     --text_encoder clip \
     --embedding_size 256 \
-	--batch_size 64 \
-    --epochs 10 \
-    --lr 0.00001 \
-    --weight_decay 0.00001
+    --train_size 0.5 \
+    --val_size 0.5 \
+    --random_subset true \
+    --checkpoint "asdf"

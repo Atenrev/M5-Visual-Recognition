@@ -12,7 +12,6 @@ from src.metrics import (
     calculate_top_k_accuracy,
 )
 from src.methods.annoyers import Annoyer
-from src.models.resnet import ResNetWithEmbedder
 from src.models.triplet_nets import ImageToTextTripletModel, SymmetricSiameseModel, TextToImageTripletModel
 from src.models.resnet import ResNetWithEmbedder
 from src.models.bert_text_encoder import BertTextEncoder
@@ -31,6 +30,12 @@ def __parse_args() -> argparse.Namespace:
                         help='Path to the dataset.')
     parser.add_argument('--seed', type=int, default=42,
                         help='Seed for the experiment.')
+    parser.add_argument('--train_size', type=float, default=1.0,
+                        help='Percentage of the dataset to use for training.')
+    parser.add_argument('--val_size', type=float, default=1.0,
+                        help='Percentage of the dataset to use for validation.')
+    parser.add_argument('--random_subset', type=bool, default=False,
+                        help='Whether to use a random subset for train and val (given by train_size and val_size).')
     # Annoyer
     parser.add_argument('--n_neighbors', type=int, default=50,
                         help='Number of nearest neighbors to retrieve.')
@@ -52,6 +57,9 @@ def __parse_args() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
+
+def recall_at_k(labels, n_relevant, k):
+    return np.sum(labels[:k]) / n_relevant
 
 def run_experiment(
     dataloader, model, embed_size, mode, n_neighbors=50, experiment_name='resnet_base', device='cuda'
@@ -78,20 +86,18 @@ def run_experiment(
 
     # Metrics
     mavep, mavep25 = [], []
-    top_1_acc, top_5_acc, top_10_acc = [], [], []
+    top_1_acc, top_5_acc, = [], []
+    top_1_recall, top_5_recall, = [], []
 
-    seen_images = set()
     for idx in tqdm(range(len(dataloader.dataset))):
         anchor, _, _ = dataloader.dataset[idx]
-        anchor = anchor.unsqueeze(0)
-        print("anchor.shape ", anchor.shape)
-        if type(anchor[0]) == str:  # Text2Image
-            anchor = embedder_query.tokenize(anchor).to(device)
+        is_text_anchor = type(anchor[0]) == str
+
+        if is_text_anchor:  # Text2Image
+            anchor = embedder_query.tokenizer_encode_text(anchor).to(device)
             V = embedder_query(anchor.input_ids, anchor.attention_mask).squeeze()
         else:  # Image2Text
-            if dataloader.dataset.image_paths[idx] in seen_images:
-                continue
-            seen_images.add(dataloader.dataset.image_paths[idx])
+            anchor = anchor.unsqueeze(0)
             anchor = anchor.to(device)
             V = embedder_query(anchor).squeeze()
 
@@ -100,22 +106,22 @@ def run_experiment(
         )
 
         labels = []
-        if type(anchor[0]) == str:
-            # Text2Image
+        if is_text_anchor:  # Text2Image
+            n_relevant = 1
             for nn in nns:
-                labels.append(nn == idx)  # Check if same idx (a caption is associated to a single image)
-        else:
-            # Image2Text
+                labels.append(nn == idx)
+        else:  # Image2Text
+            valid_captions_idxs = annoy.idx_dataset2annoyer[idx]
+            n_relevant = len(valid_captions_idxs)
             for nn in nns:
-                labels.append(
-                    int(dataloader.dataset.image_paths[idx] == dataloader.dataset.image_paths[nn])
-                )  # Check if same image path (an image can have multiple captions)
+                labels.append(nn in valid_captions_idxs)
 
         mavep.append(calculate_mean_average_precision(labels, distances))
         mavep25.append(calculate_mean_average_precision(labels[:26], distances[:26]))
         top_1_acc.append(calculate_top_k_accuracy(labels, k = 1))
         top_5_acc.append(calculate_top_k_accuracy(labels, k = 5))
-        top_10_acc.append(calculate_top_k_accuracy(labels, k = 10))
+        top_1_recall.append(recall_at_k(labels, n_relevant=n_relevant, k=1))
+        top_5_recall.append(recall_at_k(labels, n_relevant=n_relevant, k=5))
 
     print(
         "Metrics: ",
@@ -123,13 +129,15 @@ def run_experiment(
         f"\n\tmAveP@25: {np.mean(mavep25) * 100} %",
         f"\n\ttop_1 - precision: {np.mean(top_1_acc) * 100} %",
         f"\n\ttop_5 - precision: {np.mean(top_5_acc) * 100} %",
-        f"\n\ttop_10 - precision: {np.mean(top_10_acc) * 100} %",
+        f"\n\ttop_1 - recall: {np.mean(top_1_recall) * 100} %",
+        f"\n\ttop_5 - recall: {np.mean(top_5_recall) * 100} %",
     )
     print(f"Finished experiment {experiment_name}.")
     print("--------------------------------------------------")
 
-    return np.mean(mavep), np.mean(mavep25), np.mean(top_1_acc), np.mean(top_5_acc), np.mean(top_10_acc)
+    return np.mean(mavep), np.mean(mavep25), np.mean(top_1_acc), np.mean(top_5_acc),  np.mean(top_1_recall), np.mean(top_5_recall)
 
+## recall
 
 def main(args: argparse.Namespace):
     # Set seeds
@@ -138,12 +146,22 @@ def main(args: argparse.Namespace):
     random.seed(args.seed)
 
     # Load data
+    # _, val_dataloader, _ = create_coco_dataloader(
+    #     args.dataset_path,
+    #     1,
+    #     inference=False,
+    #     test_mode=True, # TODO: Change to False!!!
+    # )
     _, val_dataloader, _ = create_coco_dataloader(
-        args.dataset_path,
-        1,
+        dataset_path=args.dataset_path,
+        batch_size=1,
         inference=False,
-        test_mode=True, # TODO: Change to False!!!
+        mode=args.mode,
+        train_size=args.train_size,
+        val_size=args.val_size,
+        random_subset=args.random_subset,
     )
+
     # Create dummy data for testing
     # val_dataloader = create_dummy_dataloader(args)
 
@@ -190,7 +208,7 @@ def main(args: argparse.Namespace):
 
     experiment_name = f"{args.mode}_{args.image_encoder}_{args.text_encoder}_embed{args.embedding_size}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     with torch.no_grad():
-        mavep, mavep25, top_1_acc, top_5_acc, top_10_acc = run_experiment(
+        mavep, mavep25, top_1_acc, top_5_acc, top_1_recall, top_5_recall = run_experiment(
             val_dataloader, model,
             args.embedding_size, args.mode, args.n_neighbors,
             experiment_name=experiment_name
@@ -200,12 +218,24 @@ def main(args: argparse.Namespace):
             f.write(f"mAveP@25: {mavep25}\n")
             f.write(f"top_1 - precision: {top_1_acc}\n")
             f.write(f"top_5 - precision: {top_5_acc}\n")
-            f.write(f"top_10 - precision: {top_10_acc}\n")
+            f.write(f"top_1 - recall: {top_1_recall}\n")
+            f.write(f"top_5 - recall: {top_5_recall}\n")
 
         if args.mode == 'symmetric':  # Run both Image2Text and Text2Image
             args.mode = 'text_to_image'
+
+            _, val_dataloader, _ = create_coco_dataloader(
+                dataset_path=args.dataset_path,
+                batch_size=1,
+                inference=False,
+                mode=args.mode,
+                train_size=args.train_size,
+                val_size=args.val_size,
+                random_subset=args.random_subset,
+            )
+
             experiment_name = f"{args.mode}_{args.image_encoder}_{args.text_encoder}_embed{args.embedding_size}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            mavep, mavep25, top_1_acc, top_5_acc, top_10_acc = run_experiment(
+            mavep, mavep25, top_1_acc, top_5_acc, top_1_recall, top_5_recall = run_experiment(
                 val_dataloader, model,
                 args.embedding_size, args.mode, args.n_neighbors,
                 experiment_name=experiment_name
@@ -216,7 +246,8 @@ def main(args: argparse.Namespace):
                 f.write(f"mAveP@25: {mavep25}\n")
                 f.write(f"top_1 - precision: {top_1_acc}\n")
                 f.write(f"top_5 - precision: {top_5_acc}\n")
-                f.write(f"top_10 - precision: {top_10_acc}\n")
+                f.write(f"top_1 - recall: {top_1_recall}\n")
+                f.write(f"top_5 - recall: {top_5_recall}\n")
 
 
 if __name__ == "__main__":
