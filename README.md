@@ -47,7 +47,7 @@
 
 [Presentation slides](https://docs.google.com/presentation/d/1gfIFUH8qz5ue8yad1Zp9mZdpseCHdp4RkYCZdrdq--A/edit?usp=sharing)
 
-[Code](https://github.com/Atenrev/M5-Visual-Recognition/tree/main/week5)
+[Code](week5/readme.md)
 
 [Technical report](https://www.overleaf.com/read/wczvtbgkzmtz)
 
