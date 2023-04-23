@@ -12,14 +12,14 @@
 - Alvaro Francesc Budria Fernandez ([email](mailto:alvaro.francesc.budria@estudiantat.upc.edu))
 
 
-## Lab 1
+## Lab 1 - Introduction to Pytorch
 
 [Presentation slides](https://docs.google.com/presentation/d/1N0aDFoihjSk5I_r0FaBP8MKEkNiQIScsjYzAy7u0WtA/edit?usp=sharing)
 
 [Code](week1/readme.md)
 
 
-## Lab 2
+## Lab 2 - Introduction to Object detection and Instance Segmentation with Detectron2
 
 [Overleaf document](https://www.overleaf.com/read/wczvtbgkzmtz)
 
@@ -27,7 +27,7 @@
 
 [Code](week2/readme.md)
 
-## Lab 3
+## Lab 3 - Elephant in the Room
 
 [Overleaf document](https://www.overleaf.com/read/wczvtbgkzmtz)
 
@@ -35,7 +35,7 @@
 
 [Code](week3/readme.md)
 
-## Lab 4
+## Lab 4 - Image Retrieval
 
 [Overleaf document](https://www.overleaf.com/read/wczvtbgkzmtz)
 
