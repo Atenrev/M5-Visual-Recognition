@@ -42,3 +42,11 @@
 [Presentation slides](https://docs.google.com/presentation/d/1Nc-LMoexcwWQh2YC-LRhskNEfGTeSG66W5IjuYabq2U/edit?usp=sharing)
 
 [Code](week4/readme.md)
+
+## Lab 5 - Cross-modal Retrieval
+
+[Presentation slides](https://docs.google.com/presentation/d/1gfIFUH8qz5ue8yad1Zp9mZdpseCHdp4RkYCZdrdq--A/edit?usp=sharing)
+
+[Technical report](https://www.overleaf.com/read/wczvtbgkzmtz)
+
+[Final presentation](https://docs.google.com/presentation/d/1jS4Ydrra-toQ_fmQwdTkZ_Q3XWInqgFt3ttHvXt8ryc/edit?usp=sharing)
