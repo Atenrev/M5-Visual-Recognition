@@ -21,23 +21,17 @@
 
 ## Lab 2 - Introduction to Object detection and Instance Segmentation with Detectron2
 
-[Overleaf document](https://www.overleaf.com/read/wczvtbgkzmtz)
-
 [Presentation slides](https://docs.google.com/presentation/d/1C0G-nqxH_7CE-lY5INbEw5qNCo7IHPPgs7JmohEAivA/edit?usp=sharing)
 
 [Code](week2/readme.md)
 
 ## Lab 3 - Elephant in the Room
 
-[Overleaf document](https://www.overleaf.com/read/wczvtbgkzmtz)
-
 [Presentation slides](https://docs.google.com/presentation/d/1fATsuFsUoD_CjUBYmI8Pr8WGOHp-kMw_m_ujcg-kkGQ/edit?usp=sharing)
 
 [Code](week3/readme.md)
 
 ## Lab 4 - Image Retrieval
-
-[Overleaf document](https://www.overleaf.com/read/wczvtbgkzmtz)
 
 [Presentation slides](https://docs.google.com/presentation/d/1Nc-LMoexcwWQh2YC-LRhskNEfGTeSG66W5IjuYabq2U/edit?usp=sharing)
 
