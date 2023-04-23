@@ -12,7 +12,7 @@ from tasks import task_a, task_b, task_c, task_d, task_e
 
 def _parse_args() -> argparse.Namespace:
     usage_message = """
-                    Script for training a panels detector.
+                    Week3 - Challenges of Object Detection and Instance Segmentation.
                     """
 
     parser = argparse.ArgumentParser(usage=usage_message)

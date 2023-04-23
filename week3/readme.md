@@ -27,3 +27,27 @@ python -m pip install detectron2 -f \
 ```
 pip install opencv-python fiftyone setuptools==59.5.0 scikit-image
 ```
+
+
+## Execution
+
+To execute the tasks, run `python main.py`, specifying which task is to be run:
+
+```
+Week3 - Challenges of Object Detection and Instance Segmentation.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --mode MODE, -m MODE  Mode (task_a, task_b, task_c, task_d, task_e)
+  --seed SEED, -s SEED  Seed
+  --output_dir OUTPUT_DIR, -o OUTPUT_DIR
+                        Output directory
+  --model MODEL, -mo MODEL
+                        Model (mask_rcnn, faster_rcnn)
+  --checkpoint CHECKPOINT, -ch CHECKPOINT
+                        Model weights path
+  --load_dataset LOAD_DATASET, -tr LOAD_DATASET
+                        Load dataset
+  --sequence SEQUENCE, -seq SEQUENCE
+                        Sequence to draw in draw_sequence mode
+```
