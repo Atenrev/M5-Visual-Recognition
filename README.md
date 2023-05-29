@@ -1,5 +1,9 @@
 # Analyzing the Capabilities of Visual Recognition Systems in Autonomous Driving and in Out-of-Domain Scenarios
 
+![Alt text](/imgs/bird.png "")
+
+![Alt text](/imgs/texture.png "")
+
 [Technical report](https://www.overleaf.com/read/wczvtbgkzmtz)
 
 [Final presentation](https://docs.google.com/presentation/d/1jS4Ydrra-toQ_fmQwdTkZ_Q3XWInqgFt3ttHvXt8ryc/edit?usp=sharing)
